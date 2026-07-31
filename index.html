@@ -20,10 +20,10 @@ body{
   overflow-x:hidden;overflow-y:auto;
   user-select:none;-webkit-user-select:none;
   -webkit-tap-highlight-color:transparent;
-  background:#0a0a1a;
+  background:url('images/bg.svg') center/cover no-repeat fixed,#0a0a1a;
 }
 
-canvas#bgCanvas{position:fixed;top:0;left:0;width:100%;height:100%;z-index:0}
+canvas#bgCanvas{position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;pointer-events:none}
 
 /* ========== 主容器 ========== */
 .game-container{
@@ -62,68 +62,38 @@ canvas#bgCanvas{position:fixed;top:0;left:0;width:100%;height:100%;z-index:0}
 }
 .pig-char.gone{opacity:0;transform:translateY(-40px) scale(.3);pointer-events:none}
 
-/* 猪头 */
-.pig-head{
+/* 猪头图片 */
+.pig-head-img{
   width:var(--pig-size);height:var(--pig-size);
-  background:linear-gradient(180deg,#ffb8b8,#f5a0a0);
-  border-radius:50% 50% 45% 45%;
-  position:relative;
-  box-shadow:inset 0 -4px 6px rgba(0,0,0,.1);
-}
-/* 耳朵 */
-.pig-head::before,.pig-head::after{
-  content:'';position:absolute;top:-6px;
-  width:12px;height:10px;background:#f5a0a0;
-  border-radius:50% 50% 30% 30%;
-}
-.pig-head::before{left:2px;transform:rotate(-15deg)}
-.pig-head::after{right:2px;transform:rotate(15deg)}
-/* 眼睛 */
-.pig-eyes{
-  position:absolute;top:11px;left:0;width:100%;display:flex;justify-content:center;gap:7px;
-}
-.pig-eye{width:5px;height:6px;background:#333;border-radius:50%}
-/* 鼻子 */
-.pig-nose{
-  position:absolute;top:17px;left:50%;transform:translateX(-50%);
-  width:12px;height:8px;background:#e88888;border-radius:50%;
-}
-.pig-nose::before,.pig-nose::after{
-  content:'';position:absolute;top:2px;width:2px;height:2px;background:#c44;border-radius:50%;
-}
-.pig-nose::before{left:3px}.pig-nose::after{right:3px}
-/* 嘴巴 */
-.pig-mouth{
-  position:absolute;top:23px;left:50%;transform:translateX(-50%);
-  width:8px;height:3px;border-bottom:1.5px solid #c44;border-radius:0 0 4px 4px;
+  object-fit:contain;
+  filter:drop-shadow(0 2px 4px rgba(0,0,0,.25));
+  transition:transform .3s;
 }
 /* 衣服 */
 .pig-outfit{
-  width:calc(var(--pig-size) - 4px);height:10px;
-  border-radius:3px 3px 8px 8px;
-  margin-top:-2px;position:relative;z-index:1;
-  box-shadow:0 2px 4px rgba(0,0,0,.15);
+  width:calc(var(--pig-size) - 6px);height:10px;
+  border-radius:3px 3px 10px 10px;
+  margin-top:-3px;position:relative;z-index:1;
+  box-shadow:0 2px 4px rgba(0,0,0,.2),inset 0 1px 2px rgba(255,255,255,.25);
 }
 /* 开心状态 */
-.pig-char.happy .pig-head{
-  animation:pigJump .6s ease 3;
-}
-.pig-char.happy .pig-outfit{
-  animation:pigSparkle .3s ease 4;
-}
+.pig-char.happy .pig-head-img{animation:pigJump .55s ease 3}
+.pig-char.happy .pig-outfit{animation:pigSparkle .3s ease 4}
 @keyframes pigJump{
-  0%,100%{transform:translateY(0)}
-  50%{transform:translateY(-14px)}
+  0%,100%{transform:translateY(0) rotate(0deg)}
+  25%{transform:translateY(-16px) rotate(-8deg)}
+  50%{transform:translateY(-8px) rotate(0deg)}
+  75%{transform:translateY(-14px) rotate(8deg)}
 }
 @keyframes pigSparkle{
-  0%,100%{box-shadow:0 2px 4px rgba(0,0,0,.15)}
-  50%{box-shadow:0 0 12px var(--spark-color),0 2px 4px rgba(0,0,0,.15)}
+  0%,100%{box-shadow:0 2px 4px rgba(0,0,0,.2),inset 0 1px 2px rgba(255,255,255,.25)}
+  50%{box-shadow:0 0 14px var(--spark-color),0 2px 4px rgba(0,0,0,.2),inset 0 1px 2px rgba(255,255,255,.25)}
 }
 
 /* 猪猪离开粒子 */
 .pig-particle{
-  position:fixed;width:6px;height:6px;border-radius:50%;pointer-events:none;z-index:350;
-  animation:pigPartUp .8s ease-out forwards;
+  position:fixed;width:7px;height:7px;border-radius:50%;pointer-events:none;z-index:350;
+  animation:pigPartUp .9s ease-out forwards;
 }
 @keyframes pigPartUp{
   0%{opacity:1;transform:translate(0,0) scale(1)}
@@ -160,29 +130,29 @@ canvas#bgCanvas{position:fixed;top:0;left:0;width:100%;height:100%;z-index:0}
 
 .bottle-neck{
   width:var(--neck-w);height:var(--neck-h);
-  background:linear-gradient(180deg,rgba(255,255,255,.15),rgba(255,255,255,.05));
-  border:2px solid rgba(255,255,255,.15);
+  background:linear-gradient(180deg,rgba(255,255,255,.18),rgba(255,255,255,.06));
+  border:2px solid rgba(255,255,255,.2);
   border-bottom:none;border-radius:5px 5px 0 0;
   margin-bottom:-1px;z-index:1;position:relative;
 }
 .bottle-neck::after{
   content:'';position:absolute;top:3px;left:6px;width:3px;height:8px;
-  background:rgba(255,255,255,.3);border-radius:2px;
+  background:rgba(255,255,255,.35);border-radius:2px;
 }
 
 .bottle-body{
   width:var(--bottle-w);height:var(--bottle-h);position:relative;
-  background:linear-gradient(180deg,rgba(255,255,255,.08),rgba(255,255,255,.03));
-  border:2px solid rgba(255,255,255,.15);
+  background:linear-gradient(180deg,rgba(255,255,255,.1),rgba(255,255,255,.04));
+  border:2px solid rgba(255,255,255,.2);
   border-radius:8px 8px 20px 20px;overflow:hidden;
   backdrop-filter:blur(4px);
   display:flex;flex-direction:column-reverse;
-  box-shadow:inset 0 0 20px rgba(255,255,255,.03);
+  box-shadow:inset 0 0 20px rgba(255,255,255,.05);
   transition:box-shadow .5s;
 }
 .bottle-body::after{
   content:'';position:absolute;top:6%;left:14%;width:6px;height:28%;
-  background:linear-gradient(180deg,rgba(255,255,255,.5),rgba(255,255,255,0));
+  background:linear-gradient(180deg,rgba(255,255,255,.55),rgba(255,255,255,0));
   border-radius:3px;pointer-events:none;z-index:10;
 }
 
@@ -194,7 +164,7 @@ canvas#bgCanvas{position:fixed;top:0;left:0;width:100%;height:100%;z-index:0}
 .bottle-wrapper.full-glow .bottle-body{animation:bottleGlow 2s ease-in-out infinite}
 @keyframes bottleGlow{
   0%,100%{box-shadow:inset 0 0 15px rgba(255,255,255,.05),0 0 15px var(--glow-color,transparent)}
-  50%{box-shadow:inset 0 0 25px rgba(255,255,255,.1),0 0 30px var(--glow-color,transparent),0 0 50px var(--glow-color,transparent)}
+  50%{box-shadow:inset 0 0 25px rgba(255,255,255,.1),0 0 30px var(--glow-color,transparent),0 0 55px var(--glow-color,transparent)}
 }
 
 .bottle-label{font-size:9px;margin-top:4px;font-weight:600;color:rgba(255,255,255,.6);letter-spacing:.5px}
@@ -207,13 +177,22 @@ canvas#bgCanvas{position:fixed;top:0;left:0;width:100%;height:100%;z-index:0}
 .bottle-wrapper.hint-pulse .bottle-body{animation:hintGlow 1.2s ease-in-out infinite}
 @keyframes hintGlow{0%,100%{box-shadow:inset 0 0 20px rgba(124,92,252,.1),0 0 10px rgba(124,92,252,.2)}50%{box-shadow:inset 0 0 30px rgba(124,92,252,.2),0 0 25px rgba(124,92,252,.5),0 0 50px rgba(124,92,252,.25)}}
 
-.bottle-wrapper.pouring{animation:pourTilt .4s ease}
-@keyframes pourTilt{0%{transform:rotate(0)}30%{transform:rotate(-15deg)}70%{transform:rotate(-15deg)}100%{transform:rotate(0)}}
+.bottle-wrapper.pouring{animation:pourTilt .55s ease forwards}
+@keyframes pourTilt{0%{transform:rotate(0)}20%{transform:rotate(-22deg)}80%{transform:rotate(-22deg)}100%{transform:rotate(0)}}
 
-.pour-droplet{position:fixed;width:8px;height:10px;border-radius:50% 50% 50% 50% / 60% 60% 40% 40%;pointer-events:none;z-index:100;animation:dropletFall .4s ease-in forwards}
-@keyframes dropletFall{0%{opacity:1;transform:translate(0,0) scale(1)}60%{opacity:1;transform:translate(var(--dx),var(--dy)) scale(.6)}100%{opacity:0;transform:translate(var(--dx),var(--dy)) scale(.3)}}
+/* 倒水效果 */
+.pour-stream-svg{position:fixed;pointer-events:none;z-index:100;top:0;left:0;width:100%;height:100%}
+.pour-stream-svg .liquid-path{fill:none;stroke-linecap:round;stroke-dasharray:var(--plen);stroke-dashoffset:var(--plen);animation:streamReveal .5s ease forwards}
+@keyframes streamReveal{to{stroke-dashoffset:0}}
+.pour-stream-svg .liquid-glow{fill:none;stroke-linecap:round;stroke-dasharray:var(--plen);stroke-dashoffset:var(--plen);animation:streamReveal .5s ease forwards;filter:blur(4px);opacity:.6}
 
-.receive-ripple{position:absolute;width:100%;height:3px;background:rgba(255,255,255,.4);border-radius:50%;animation:rippleUp .35s ease-out forwards;pointer-events:none;z-index:5}
+.pour-splash{position:fixed;width:6px;height:6px;border-radius:50%;pointer-events:none;z-index:100;animation:splashPop .45s ease-out forwards}
+@keyframes splashPop{0%{transform:translate(0,0) scale(1);opacity:1}100%{transform:translate(var(--sdx),var(--sdy)) scale(0);opacity:0}}
+
+.bottle-wrapper .liquid-drain{position:absolute;width:100%;background:rgba(0,0,0,.3);z-index:1;pointer-events:none;border-radius:0 0 18px 18px;animation:drainRise .45s ease forwards}
+@keyframes drainRise{0%{height:0;bottom:0}100%{height:var(--drain-h);bottom:0}}
+
+.receive-ripple{position:absolute;width:100%;height:3px;background:rgba(255,255,255,.5);border-radius:50%;animation:rippleUp .35s ease-out forwards;pointer-events:none;z-index:5}
 @keyframes rippleUp{0%{transform:scaleY(0);opacity:1}100%{transform:scaleY(3);opacity:0}}
 
 /* ========== 底部控制 ========== */
@@ -297,16 +276,16 @@ canvas#bgCanvas{position:fixed;top:0;left:0;width:100%;height:100%;z-index:0}
 .sound-toggle:active{transform:scale(.9)}
 .sound-toggle.muted{opacity:.5}
 
-/* ========== iPhone 14 Pro Max (430×932) ========== */
+/* ========== iPhone 14 Pro Max (390-440px) ========== */
 @media(min-width:390px) and (max-width:440px){
-  :root{--bottle-w:56px;--bottle-h:128px;--neck-w:28px;--neck-h:18px;--pig-size:38px}
+  :root{--bottle-w:56px;--bottle-h:128px;--neck-w:28px;--neck-h:18px;--pig-size:40px}
   .btn{padding:10px 16px;font-size:13px}
   .top-bar{padding:8px 14px}.level-info{font-size:20px}
 }
 
-/* ========== iPad (≥768px) ========== */
+/* ========== iPad (≥700px) ========== */
 @media(min-width:700px){
-  :root{--bottle-w:72px;--bottle-h:170px;--neck-w:36px;--neck-h:22px;--pig-size:52px}
+  :root{--bottle-w:72px;--bottle-h:170px;--neck-w:36px;--neck-h:22px;--pig-size:54px}
   .game-container{max-width:700px;padding:20px 16px}
   .bottles-area{min-height:500px}
   .btn{padding:14px 24px;font-size:15px;border-radius:24px}
@@ -314,7 +293,7 @@ canvas#bgCanvas{position:fixed;top:0;left:0;width:100%;height:100%;z-index:0}
   .level-info{font-size:24px}.level-info .lv{font-size:16px}
   .move-info{font-size:15px;padding:8px 18px}.move-info span{font-size:24px}
   .star{font-size:22px}.star-row{padding:6px 12px}
-  .pig-row{gap:10px;padding:10px;min-height:70px}
+  .pig-row{gap:12px;padding:10px;min-height:76px}
   .level-hint{font-size:14px;margin-bottom:6px}
   .controls{gap:12px;padding:14px 0 6px}
   .bottle-label{font-size:12px}
@@ -413,29 +392,41 @@ function initAudio(){
   if(!audioCtx)audioCtx=new(window.AudioContext||window.webkitAudioContext)();
 }
 
+function makeNoiseBuffer(){
+  if(!audioCtx)return null;
+  const len=audioCtx.sampleRate*.4;
+  const buf=audioCtx.createBuffer(1,len,audioCtx.sampleRate);
+  const data=buf.getChannelData(0);
+  for(let i=0;i<len;i++)data[i]=Math.random()*2-1;
+  return buf;
+}
+
 function playPourSound(){
   if(!soundEnabled||!audioCtx)return;
   const t=audioCtx.currentTime;
-  // 咕噜声：低频渐降
-  for(let i=0;i<3;i++){
-    const o=audioCtx.createOscillator(),g=audioCtx.createGain();
-    o.type='sine';o.frequency.setValueAtTime(180+i*40,t+i*.08);
-    o.frequency.linearRampToValueAtTime(100,t+i*.08+.15);
-    g.gain.setValueAtTime(.08,t+i*.08);
-    g.gain.linearRampToValueAtTime(0,t+i*.08+.15);
-    o.connect(g);g.connect(audioCtx.destination);
-    o.start(t+i*.08);o.stop(t+i*.08+.15);
-  }
+  // 白噪声咕噜水声
+  const buf=makeNoiseBuffer();if(!buf)return;
+  const src=audioCtx.createBufferSource();src.buffer=buf;
+  const filter=audioCtx.createBiquadFilter();
+  filter.type='lowpass';
+  filter.frequency.setValueAtTime(600,t);
+  filter.frequency.linearRampToValueAtTime(350,t+.55);
+  const g=audioCtx.createGain();
+  g.gain.setValueAtTime(.16,t);
+  g.gain.setValueAtTime(.16,t+.45);
+  g.gain.linearRampToValueAtTime(0,t+.55);
+  src.connect(filter);filter.connect(g);g.connect(audioCtx.destination);
+  src.start(t);src.stop(t+.55);
 }
 function playDropSound(){
   if(!soundEnabled||!audioCtx)return;
   const t=audioCtx.currentTime;
   const o=audioCtx.createOscillator(),g=audioCtx.createGain();
-  o.type='sine';o.frequency.setValueAtTime(600,t);
-  o.frequency.linearRampToValueAtTime(300,t+.1);
-  g.gain.setValueAtTime(.06,t);g.gain.linearRampToValueAtTime(0,t+.12);
+  o.type='sine';o.frequency.setValueAtTime(520,t);
+  o.frequency.exponentialRampToValueAtTime(180,t+.12);
+  g.gain.setValueAtTime(.1,t);g.gain.linearRampToValueAtTime(0,t+.14);
   o.connect(g);g.connect(audioCtx.destination);
-  o.start(t);o.stop(t+.12);
+  o.start(t);o.stop(t+.14);
 }
 function playBottleCompleteSound(){
   if(!soundEnabled||!audioCtx)return;
@@ -496,7 +487,7 @@ const TOTAL_LEVELS=LEVEL_CONFIGS.length;
 // ==================== 游戏状态 ====================
 let bottles=[],selectedBottle=-1,moves=0,currentLevel=1,maxLayers=4;
 let history=[],levelStars={},isAnimating=false,tutorialShown=false;
-let bottlePositions=[],completedColors=new Set();
+let bottlePositions=[],completedColors=new Set(),gonePigColors=new Set();
 
 function loadProgress(){
   try{
@@ -519,8 +510,8 @@ function initBackground(){
   function resize(){W=c.width=window.innerWidth;H=c.height=window.innerHeight}
   resize();window.addEventListener('resize',resize);
   const cols=['#a78bfa','#7c5cfc','#ff6b9d','#3ddc84','#4da6ff','#ffc940','#ff8c3a','#2dd4bf'];
-  for(let i=0;i<45;i++){
-    particles.push({x:Math.random()*W,y:Math.random()*H,r:2+Math.random()*6,vx:(Math.random()-.5)*.3,vy:-(.2+Math.random()*.5),c:cols[Math.floor(Math.random()*cols.length)],alpha:.08+Math.random()*.12});
+  for(let i=0;i<55;i++){
+    particles.push({x:Math.random()*W,y:Math.random()*H,r:2+Math.random()*7,vx:(Math.random()-.5)*.25,vy:-(.15+Math.random()*.4),c:cols[Math.floor(Math.random()*cols.length)],alpha:.06+Math.random()*.12});
   }
   function draw(){
     ctx.clearRect(0,0,W,H);
@@ -638,51 +629,50 @@ function updateCompletedColors(){
 function renderPigRow(){
   const cfg=LEVEL_CONFIGS[currentLevel-1];
   const row=document.getElementById('pigRow');
+
+  // 先捕获即将离开的猪猪位置（旧DOM还存在）
+  const pigsToAnimate=[];
+  for(let c=0;c<cfg.colors;c++){
+    if(completedColors.has(c)&&!gonePigColors.has(c)){
+      gonePigColors.add(c);
+      const oldEl=document.getElementById('pig'+c);
+      if(oldEl){
+        const r=oldEl.getBoundingClientRect();
+        pigsToAnimate.push({color:c,cx:r.left+r.width/2,cy:r.top+r.height/2});
+      }
+    }
+  }
+
+  // 重建DOM（已离开的跳过）
   let html='';
   for(let c=0;c<cfg.colors;c++){
-    const color=COLORS[c],gone=completedColors.has(c);
-    html+=`<div class="pig-char${gone?' happy':''}" data-pig-color="${c}" id="pig${c}">
-      <div class="pig-head">
-        <div class="pig-eyes"><div class="pig-eye"></div><div class="pig-eye"></div></div>
-        <div class="pig-nose"></div>
-        <div class="pig-mouth"></div>
-      </div>
+    if(gonePigColors.has(c))continue;
+    const color=COLORS[c],justDone=completedColors.has(c);
+    html+=`<div class="pig-char${justDone?' happy':''}" data-pig-color="${c}" id="pig${c}">
+      <img class="pig-head-img" src="images/pig_head.png" alt="猪猪侠">
       <div class="pig-outfit" style="background:${color.hex};--spark-color:${color.glow}"></div>
     </div>`;
   }
   row.innerHTML=html;
 
-  // 已经完成 → 触发离开
-  for(let c=0;c<cfg.colors;c++){
-    if(completedColors.has(c)){
-      const el=document.getElementById('pig'+c);
-      if(el&&!el.dataset.flying){
-        el.dataset.flying='1';
-        setTimeout(()=>animatePigLeave(c,el),800);
-      }
-    }
-  }
+  // 用保存的位置触发粒子动画
+  pigsToAnimate.forEach(({color,cx,cy})=>{
+    setTimeout(()=>animatePigLeave(color,cx,cy),500);
+  });
 }
 
-function animatePigLeave(colorIdx,el){
+function animatePigLeave(colorIdx,cx,cy){
   playBottleCompleteSound();
-  // 粒子效果
-  const rect=el.getBoundingClientRect();
-  const cx=rect.left+rect.width/2,cy=rect.top+rect.height/2;
   const fx=document.getElementById('fxLayer');
   const color=COLORS[colorIdx];
-  for(let i=0;i<8;i++){
+  for(let i=0;i<10;i++){
     const p=document.createElement('div');p.className='pig-particle';
     p.style.left=cx+'px';p.style.top=cy+'px';p.style.background=color.hex;
-    const angle=(i/8)*Math.PI*2,r=20+Math.random()*20;
+    const angle=(i/10)*Math.PI*2,r=25+Math.random()*25;
     p.style.setProperty('--px',Math.cos(angle)*r+'px');
-    p.style.setProperty('--py',Math.sin(angle)*r-20+'px');
-    fx.appendChild(p);setTimeout(()=>p.remove(),900);
+    p.style.setProperty('--py',Math.sin(angle)*r-30+'px');
+    fx.appendChild(p);setTimeout(()=>p.remove(),1000);
   }
-  // 飞走
-  setTimeout(()=>{
-    el.classList.add('gone');
-  },600);
 }
 
 // ==================== 渲染 ====================
@@ -699,7 +689,6 @@ function render(){
 
     html+=`<div class="bottle-wrapper${sel}${glowCls}" data-idx="${i}" style="left:${pos.x}px;top:${pos.y}px;${glowStyle}">`;
     html+='<div class="bottle-neck"></div><div class="bottle-body">';
-    // 同色合并
     let arr=[],j=0;
     while(j<b.length){let color=b[j],cnt=1;while(j+cnt<b.length&&b[j+cnt]===color)cnt++;arr.push({color,count:cnt});j+=cnt}
     for(const seg of arr){const c=COLORS[seg.color];html+=`<div class="color-block" style="height:${seg.count/maxLayers*100}%;background:linear-gradient(180deg,${c.light} 0%,${c.hex} 40%,${c.dark} 100%)"></div>`}
@@ -726,7 +715,7 @@ function updateLevelHint(){
   hint.innerHTML=`${dots} ${cfg.colors}色 · ${cfg.layers}层 · ${cfg.name}`;
 }
 
-// ==================== 倒水动画 ====================
+// ==================== 倒水动画 (SVG贝塞尔曲线液流) ====================
 function animatePour(fromIdx,toIdx,callback){
   const area=document.getElementById('bottlesArea');
   const fromEl=area.querySelector(`[data-idx="${fromIdx}"]`),toEl=area.querySelector(`[data-idx="${toIdx}"]`);
@@ -737,20 +726,117 @@ function animatePour(fromIdx,toIdx,callback){
   fromEl.classList.add('pouring');
   const fx=document.getElementById('fxLayer');
   const color=COLORS[bottles[fromIdx][bottles[fromIdx].length-1]];
-  const fromCX=fromRect.left+fromRect.width/2,fromCY=fromRect.top+16;
-  const toCX=toRect.left+toRect.width/2,toCY=toRect.top+toRect.height*.3;
-  const dx=toCX-fromCX,dy=toCY-fromCY;
 
-  for(let i=0;i<6;i++){
+  // 源瓶口 / 目标瓶口坐标
+  const sx=fromRect.left+fromRect.width/2, sy=fromRect.top+18;
+  const tx=toRect.left+toRect.width/2, ty=toRect.top+14;
+
+  // 贝塞尔控制点：水平偏移 + 重力下垂
+  const mx=(sx+tx)/2 + ((tx>sx)?-30:30);
+  const my=Math.max(sy,ty)+Math.abs(tx-sx)*0.25+10;
+
+  // ===== SVG液流 =====
+  const svgNS='http://www.w3.org/2000/svg';
+  const svg=document.createElementNS(svgNS,'svg');
+  svg.setAttribute('class','pour-stream-svg');
+  const pathD=`M${sx},${sy} Q${mx},${my} ${tx},${ty}`;
+  const pathLen=Math.sqrt((tx-sx)**2+(ty-sy)**2)*1.3; // 近似长度
+  svg.style.setProperty('--plen',pathLen+'px');
+
+  // 发光层
+  const glow=document.createElementNS(svgNS,'path');
+  glow.setAttribute('d',pathD);glow.setAttribute('stroke-width','14');
+  glow.setAttribute('stroke',color.glow);glow.setAttribute('fill','none');
+  glow.setAttribute('stroke-linecap','round');
+  glow.classList.add('liquid-glow');
+  svg.appendChild(glow);
+
+  // 主液流
+  const path=document.createElementNS(svgNS,'path');
+  path.setAttribute('d',pathD);path.setAttribute('stroke-width','6');
+  path.setAttribute('stroke',color.light);path.setAttribute('fill','none');
+  path.setAttribute('stroke-linecap','round');
+  path.classList.add('liquid-path');
+  svg.appendChild(path);
+
+  // 高光线
+  const hl=document.createElementNS(svgNS,'path');
+  hl.setAttribute('d',pathD);hl.setAttribute('stroke-width','2');
+  hl.setAttribute('stroke','rgba(255,255,255,.5)');hl.setAttribute('fill','none');
+  hl.setAttribute('stroke-linecap','round');
+  hl.setAttribute('stroke-dasharray',pathLen+'px');
+  hl.setAttribute('stroke-dashoffset',pathLen+'px');
+  hl.style.animation='streamReveal .5s ease forwards';
+  svg.appendChild(hl);
+
+  fx.appendChild(svg);
+  setTimeout(()=>svg.remove(),550);
+
+  // ===== 水滴 (沿弧线) =====
+  // 在贝塞尔曲线的10个采样点上生成水滴
+  for(let i=0;i<14;i++){
+    const t=(i/14+.02);
+    const bx=(1-t)*(1-t)*sx+2*(1-t)*t*mx+t*t*tx;
+    const by=(1-t)*(1-t)*sy+2*(1-t)*t*my+t*t*ty;
+    const delay=i*28+30;
     setTimeout(()=>{
-      const d=document.createElement('div');d.className='pour-droplet';
-      d.style.left=fromCX+'px';d.style.top=fromCY+'px';d.style.background=color.hex;
-      d.style.setProperty('--dx',dx+'px');d.style.setProperty('--dy',dy+'px');
-      d.style.animationDelay=(i*.03)+'s';fx.appendChild(d);setTimeout(()=>d.remove(),500);
-    },i*40);
+      const d=document.createElement('div');
+      d.className='pour-splash';
+      d.style.left=(bx-2)+'px';d.style.top=(by-2)+'px';
+      d.style.width='7px';d.style.height='9px';
+      d.style.borderRadius='50% 50% 50% 50% / 60% 60% 40% 40%';
+      d.style.background=color.hex;
+      d.style.boxShadow=`0 0 4px ${color.glow}`;
+      // 水滴继续往目标飞行
+      const dxOff=(Math.random()-.5)*14;
+      const dyOff=Math.random()*10+4;
+      d.style.setProperty('--sdx',dxOff+'px');
+      d.style.setProperty('--sdy',dyOff+'px');
+      d.style.animationDuration=(.3+Math.random()*.25)+'s';
+      fx.appendChild(d);setTimeout(()=>d.remove(),500);
+    },delay);
   }
-  setTimeout(()=>{playDropSound();const targetBody=toEl.querySelector('.bottle-body');if(targetBody){const ripple=document.createElement('div');ripple.className='receive-ripple';targetBody.appendChild(ripple);setTimeout(()=>ripple.remove(),400)}},200);
-  setTimeout(()=>{fromEl.classList.remove('pouring');callback()},400);
+
+  // ===== 溅射 =====
+  setTimeout(()=>{
+    playDropSound();
+    // 目标瓶波纹
+    const targetBody=toEl.querySelector('.bottle-body');
+    if(targetBody){
+      const ripple=document.createElement('div');ripple.className='receive-ripple';ripple.style.background=color.light;
+      targetBody.appendChild(ripple);setTimeout(()=>ripple.remove(),400);
+    }
+    // 溅射粒子
+    for(let i=0;i<10;i++){
+      const sp=document.createElement('div');sp.className='pour-splash';
+      sp.style.left=(tx-3)+'px';sp.style.top=(ty-3)+'px';
+      sp.style.width=(3+Math.random()*5)+'px';sp.style.height=(3+Math.random()*5)+'px';
+      sp.style.background=color.light;
+      const a=Math.random()*Math.PI*2,d=8+Math.random()*22;
+      sp.style.setProperty('--sdx',Math.cos(a)*d+'px');
+      sp.style.setProperty('--sdy',Math.sin(a)*d-(6+Math.random()*14)+'px');
+      sp.style.animationDuration=(.25+Math.random()*.2)+'s';
+      fx.appendChild(sp);setTimeout(()=>sp.remove(),400);
+    }
+  },200);
+
+  // ===== 源瓶液面下降效果 =====
+  const fromBody=fromEl.querySelector('.bottle-body');
+  if(fromBody&&bottles[fromIdx].length>0){
+    const drainH=(1/maxLayers*100)+'%';
+    const drain=document.createElement('div');
+    drain.className='liquid-drain';
+    drain.style.setProperty('--drain-h',drainH);
+    drain.style.background=color.dark;
+    drain.style.opacity='.35';
+    fromBody.appendChild(drain);
+    setTimeout(()=>drain.remove(),500);
+  }
+
+  setTimeout(()=>{
+    fromEl.classList.remove('pouring');
+    callback();
+  },520);
 }
 
 // ==================== 交互 ====================
@@ -804,7 +890,7 @@ function spawnFloatText(msg){
   const el=document.createElement('div');el.textContent=msg;el.style.cssText='position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);font-size:18px;font-weight:700;color:#fff;z-index:400;pointer-events:none;background:rgba(124,92,252,.9);padding:10px 24px;border-radius:20px;animation:floatUpText 2s ease-out forwards';
   document.body.appendChild(el);setTimeout(()=>el.remove(),2200);
 }
-(function(){const s=document.createElement('style');s.textContent='@keyframes floatUpText{0%{opacity:0;transform:translate(-50%,-50%) scale(.8)}20%{opacity:1;transform:translate(-50%,-50%) scale(1.1)}40%{transform:translate(-50%,-50%) scale(1)}80%{opacity:1;transform:translate(-50%,-80%)}100%{opacity:0;transform:translate(-50%,-120%)}}';document.head.appendChild(s)})();
+(function(){const s=document.createElement('style');s.textContent='@keyframes floatUpText{0%{opacity:0;transform:translate(-50%,-50%) scale(.8)}20%{opacity:1;transform:translate(-50%,-50%) scale(1.1)}40%{transform:translate(-50%,-50%) scale(1)}80%{opacity:1;transform:translate(-50%,-80%)}100%{opacity:0;transform:translate(-50%,-120%)}}';document.head.appendChild(s);})();
 
 // ==================== 控制 ====================
 function undo(){if(isAnimating||!history.length)return;const p=history.pop();bottles=p.bottles;moves=p.moves;selectedBottle=-1;render()}
@@ -831,15 +917,11 @@ document.getElementById('winOverlay').addEventListener('click',function(e){if(e.
 // ==================== 胜利（修复星级） ====================
 function onWin(){
   const cfg=LEVEL_CONFIGS[currentLevel-1];
-  // 基于关卡配置计算星级：总颜色层数 = colors × layers
   const totalLayers=cfg.colors*cfg.layers;
-  // 最佳情况：大约需要 totalLayers 步（每次倒水至少合并一层）
-  // 3星: ≤ totalLayers × 1.3  2星: ≤ totalLayers × 2.2  1星: > totalLayers × 2.2
   let stars;
   if(moves<=totalLayers*1.3)stars=3;
   else if(moves<=totalLayers*2.2)stars=2;
   else stars=1;
-  // 特殊：2色2层最简单，放宽条件
   if(cfg.colors===2&&cfg.layers===2){
     if(moves<=4)stars=3;else if(moves<=8)stars=2;else stars=1;
   }
@@ -877,13 +959,13 @@ function spawnFireworks(){
   const fx=document.getElementById('fxLayer');
   const cols=['#ff3b6e','#ffc940','#3ddc84','#4da6ff','#a06eea','#ff6b9d','#2dd4bf','#ff8c3a'];
   const cx=30+Math.random()*40,cy=20+Math.random()*40;
-  for(let i=0;i<18;i++){
+  for(let i=0;i<22;i++){
     const el=document.createElement('div');el.className='firework-particle';
     el.style.left=cx+'%';el.style.top=cy+'%';el.style.width=el.style.height=(4+Math.random()*5)+'px';
     el.style.background=cols[Math.floor(Math.random()*cols.length)];
-    const angle=(i/18)*Math.PI*2,dist=50+Math.random()*80;
+    const angle=(i/22)*Math.PI*2,dist=50+Math.random()*90;
     el.style.setProperty('--fx',Math.cos(angle)*dist+'px');el.style.setProperty('--fy',Math.sin(angle)*dist+'px');
-    el.style.animationDuration='.7s';fx.appendChild(el);setTimeout(()=>el.remove(),800);
+    el.style.animationDuration='.8s';fx.appendChild(el);setTimeout(()=>el.remove(),900);
   }
 }
 
@@ -920,8 +1002,7 @@ function closeTutorial(){document.getElementById('tutorialOverlay').style.displa
 // ==================== 初始化 ====================
 function initLevel(lv){
   currentLevel=lv;bottles=generateLevel(lv);selectedBottle=-1;moves=0;history=[];isAnimating=false;
-  completedColors=new Set();
-  document.getElementById('levelNum').textContent=lv;document.getElementById('moveCount').textContent='0';
+  completedColors=new Set();gonePigColors=new Set();
   updateStarsDisplay();render();
 }
 function init(){
