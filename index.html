@@ -1111,6 +1111,26 @@ function animatePour(fromIdx,toIdx,pourCount,callback){
   const fromEl=area.querySelector(`[data-idx="${fromIdx}"]`),toEl=area.querySelector(`[data-idx="${toIdx}"]`);
   if(!fromEl||!toEl){callback();return;}
 
+  // 安全兜底：无论动画链条哪里断了，2.5秒后强制重置状态
+  let animCleanupCalled=false;
+  const safetyTimer=setTimeout(()=>{
+    if(!animCleanupCalled){
+      animCleanupCalled=true;
+      isAnimating=false;
+      document.getElementById('bottlesArea').classList.remove('animating');
+      if(fromEl.isConnected){
+        fromEl.classList.remove('pouring-move','moving','moving-back');
+        fromEl.style.transition='';fromEl.style.transform='';
+        fromEl.style.left=fromEl._origLeft||'';fromEl.style.top=fromEl._origTop||'';
+      }
+      render();
+    }
+  },2500);
+  const safeCallback=()=>{
+    if(!animCleanupCalled){animCleanupCalled=true;clearTimeout(safetyTimer);}
+    callback();
+  };
+
   const isPad=window.innerWidth>=700;
   const bw=isPad?70:52,bh=isPad?165:120,neckH=isPad?18:12,neckW=isPad?28:20;
   const bottleW=isPad?56:40; // CSS --bottle-w
@@ -1132,11 +1152,14 @@ function animatePour(fromIdx,toIdx,pourCount,callback){
     fromEl.classList.remove('moving');
     fromEl.classList.add('pouring-move');
 
-    // 等倾斜动画走一段再获取精确位置（160ms确保12%×1.5s=180ms倾斜完成后再获取）
+    // 必须等瓶子完全倾斜到-90°后再测量坐标（pourTilt 12%处到达，1.5s×0.12=180ms，取240ms充裕）
     setTimeout(()=>{
+      // 安全校验：瓶子可能已被移除/替换
+      if(!fromEl.isConnected||!toEl.isConnected)return;
       const fromRect=fromEl.getBoundingClientRect(),toRect=toEl.getBoundingClientRect();
       const fx=document.getElementById('fxLayer');
       const pouree=bottles[fromIdx];
+      if(!pouree||!pouree.length)return;
       const color=COLORS[pouree[pouree.length-1]];
 
       // 90°倾斜后瓶口在左侧中心
@@ -1145,6 +1168,11 @@ function animatePour(fromIdx,toIdx,pourCount,callback){
       // 目标瓶口在顶部中央
       const tx=toRect.left+toRect.width/2;
       const ty=toRect.top+neckH+3;
+
+      // 坐标合法性校验：如果瓶子位置还没就绪（接近0,0），放弃本次动画
+      if(sx<5||sy<5||tx<5||ty<5||fromRect.width<5||toRect.width<5){
+        // 静默跳过特效，但后续必须正常走完流程
+      } else {
 
       // ===== 重力优化：水受重力下坠，控制点向下拉 =====
       const dx=tx-sx, dy=ty-sy;
@@ -1314,7 +1342,9 @@ function animatePour(fromIdx,toIdx,pourCount,callback){
         }
       },520);
 
-    },160);
+      } // end of coordinate validation else block
+
+    },240);
 
     // ===== 阶段3: 数据更新 → 源瓶立即显示变化 → 平滑回正归位 =====
     setTimeout(()=>{
@@ -1349,19 +1379,21 @@ function animatePour(fromIdx,toIdx,pourCount,callback){
       }
 
       // 4. 锁定当前倾斜状态 → 移除pourTilt动画 → 平滑回正旋转+归位
-      fromEl.style.transform='rotate(-90deg)';
-      fromEl.classList.remove('pouring-move');
-      fromEl.classList.add('moving-back');
-      fromEl.style.transition='left .45s cubic-bezier(.4,0,.2,1), top .45s cubic-bezier(.4,0,.2,1), transform .35s ease';
-      fromEl.style.transform='rotate(0deg)';
-      fromEl.style.left=fromEl._origLeft+'px';
-      fromEl.style.top=fromEl._origTop+'px';
+      if(fromEl.isConnected){
+        fromEl.style.transform='rotate(-90deg)';
+        fromEl.classList.remove('pouring-move');
+        fromEl.classList.add('moving-back');
+        fromEl.style.transition='left .45s cubic-bezier(.4,0,.2,1), top .45s cubic-bezier(.4,0,.2,1), transform .35s ease';
+        fromEl.style.transform='rotate(0deg)';
+        fromEl.style.left=fromEl._origLeft+'px';
+        fromEl.style.top=fromEl._origTop+'px';
+      }
 
       setTimeout(()=>{
         fromEl.classList.remove('moving-back');
         fromEl.style.transition='';
         fromEl.style.transform='';
-        callback();
+        safeCallback();
       },500);
     },1050);
 
