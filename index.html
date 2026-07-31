@@ -1,0 +1,1001 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>颜色分拣大师 - Water Sort Puzzle</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+
+body{
+  font-family:'PingFang SC','Microsoft YaHei',sans-serif;
+  min-height:100vh;overflow:hidden;
+  user-select:none;-webkit-user-select:none;
+  -webkit-tap-highlight-color:transparent;
+  background:#0a0a1a;
+}
+
+canvas#bgCanvas{position:fixed;top:0;left:0;width:100%;height:100%;z-index:0}
+
+/* ========== 主容器 ========== */
+.game-container{
+  position:relative;z-index:1;
+  width:100%;max-width:500px;height:100vh;margin:0 auto;
+  display:flex;flex-direction:column;padding:12px 8px;
+}
+
+/* ========== 顶部栏 ========== */
+.top-bar{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:8px 12px;flex-shrink:0;z-index:2;
+  background:rgba(255,255,255,.08);backdrop-filter:blur(12px);
+  border-radius:20px;margin-bottom:8px;
+}
+.level-info{font-size:20px;font-weight:800;color:#fff;display:flex;align-items:center;gap:2px}
+.level-info .lv{color:#a78bfa;font-size:14px}
+.move-info{
+  font-size:13px;color:rgba(255,255,255,.7);
+  background:rgba(255,255,255,.1);padding:6px 14px;border-radius:16px;
+}
+.move-info span{color:#c4a6ff;font-size:20px;font-weight:800}
+.star-row{display:flex;gap:3px;padding:4px 10px;border-radius:16px;background:rgba(255,255,255,.1)}
+.star{font-size:18px;opacity:0.2;transition:all .3s;filter:grayscale(1)}
+.star.earned{opacity:1;filter:grayscale(0);animation:starPop .4s ease}
+@keyframes starPop{0%{transform:scale(0) rotate(-30deg)}60%{transform:scale(1.5) rotate(10deg)}100%{transform:scale(1) rotate(0)}}
+
+.level-hint{
+  text-align:center;font-size:12px;color:rgba(255,255,255,.6);flex-shrink:0;
+  margin-bottom:4px;z-index:2;
+}
+.level-hint .dot{width:7px;height:7px;border-radius:50%;display:inline-block;margin:0 2px;vertical-align:middle}
+
+/* ========== 瓶子区域 ========== */
+.bottles-area{
+  flex:1;position:relative;z-index:1;
+  min-height:400px;margin:0 -4px;
+}
+
+/* ========== 瓶子 ========== */
+.bottle-wrapper{
+  position:absolute;display:flex;flex-direction:column;align-items:center;
+  cursor:pointer;transition:transform .3s cubic-bezier(.4,0,.2,1);
+  z-index:1;
+}
+.bottle-wrapper:hover{z-index:10}
+.bottle-wrapper.selected{z-index:20;animation:floatSway 2s ease-in-out infinite}
+.bottle-wrapper.selected .bottle-body{border-color:rgba(255,255,255,.7)}
+.bottle-wrapper.selected .bottle-neck{border-color:rgba(255,255,255,.7)}
+
+@keyframes floatSway{
+  0%,100%{transform:translateY(0) rotate(0deg)}
+  25%{transform:translateY(-12px) rotate(-3deg)}
+  50%{transform:translateY(-6px) rotate(0deg)}
+  75%{transform:translateY(-14px) rotate(3deg)}
+}
+
+.bottle-neck{
+  width:26px;height:16px;
+  background:linear-gradient(180deg,rgba(255,255,255,.15),rgba(255,255,255,.05));
+  border:2px solid rgba(255,255,255,.15);
+  border-bottom:none;border-radius:5px 5px 0 0;
+  margin-bottom:-1px;z-index:1;position:relative;
+}
+.bottle-neck::after{
+  content:'';position:absolute;top:3px;left:6px;width:3px;height:8px;
+  background:rgba(255,255,255,.3);border-radius:2px;
+}
+
+.bottle-body{
+  width:52px;height:120px;position:relative;
+  background:linear-gradient(180deg,rgba(255,255,255,.08),rgba(255,255,255,.03));
+  border:2px solid rgba(255,255,255,.15);
+  border-radius:8px 8px 20px 20px;overflow:hidden;
+  backdrop-filter:blur(4px);
+  display:flex;flex-direction:column-reverse;
+  box-shadow:inset 0 0 20px rgba(255,255,255,.03);
+  transition:box-shadow .5s;
+}
+.bottle-body::after{
+  content:'';position:absolute;top:6%;left:14%;width:6px;height:28%;
+  background:linear-gradient(180deg,rgba(255,255,255,.5),rgba(255,255,255,0));
+  border-radius:3px;pointer-events:none;z-index:10;
+}
+
+/* 选中光效 */
+.bottle-wrapper.selected .bottle-body{
+  box-shadow:
+    inset 0 0 20px rgba(255,255,255,.05),
+    0 0 20px rgba(167,139,250,.4),
+    0 0 40px rgba(167,139,250,.2);
+}
+
+/* 液体层 */
+.color-block{
+  width:100%;position:relative;transition:height .35s cubic-bezier(.4,0,.2,1);
+}
+.color-block::after{
+  content:'';position:absolute;top:-1px;left:10%;width:80%;height:3px;
+  background:rgba(255,255,255,.25);border-radius:50%;
+}
+
+/* 满瓶光效 */
+.bottle-wrapper.full-glow .bottle-body{
+  animation:bottleGlow 2s ease-in-out infinite;
+}
+@keyframes bottleGlow{
+  0%,100%{box-shadow:inset 0 0 15px rgba(255,255,255,.05),0 0 15px var(--glow-color,transparent)}
+  50%{box-shadow:inset 0 0 25px rgba(255,255,255,.1),0 0 30px var(--glow-color,transparent),0 0 50px var(--glow-color,transparent)}
+}
+
+.bottle-label{
+  font-size:10px;margin-top:5px;font-weight:600;
+  color:rgba(255,255,255,.6);letter-spacing:.5px;
+}
+.bottle-label.done{color:#4caf50;text-shadow:0 0 8px rgba(76,175,80,.4)}
+.bottle-label.empty{color:rgba(255,255,255,.3)}
+
+/* 抖动 */
+@keyframes shake{
+  0%,100%{transform:translateX(0)}
+  20%{transform:translateX(-5px)}
+  40%{transform:translateX(5px)}
+  60%{transform:translateX(-4px)}
+  80%{transform:translateX(3px)}
+}
+.bottle-wrapper.shake{animation:shake .4s ease}
+
+/* 提示脉冲 */
+.bottle-wrapper.hint-pulse .bottle-body{
+  animation:hintGlow 1.2s ease-in-out infinite;
+}
+@keyframes hintGlow{
+  0%,100%{box-shadow:inset 0 0 20px rgba(124,92,252,.1),0 0 10px rgba(124,92,252,.2)}
+  50%{box-shadow:inset 0 0 30px rgba(124,92,252,.2),0 0 25px rgba(124,92,252,.5),0 0 50px rgba(124,92,252,.25)}
+}
+
+/* 倒水动画 - 倾斜 */
+.bottle-wrapper.pouring{animation:pourTilt .4s ease}
+@keyframes pourTilt{
+  0%{transform:rotate(0)}
+  30%{transform:rotate(-15deg)}
+  70%{transform:rotate(-15deg)}
+  100%{transform:rotate(0)}
+}
+
+/* 水滴 */
+.pour-droplet{
+  position:fixed;width:8px;height:10px;border-radius:50% 50% 50% 50% / 60% 60% 40% 40%;
+  pointer-events:none;z-index:100;
+  animation:dropletFall .4s ease-in forwards;
+}
+@keyframes dropletFall{
+  0%{opacity:1;transform:translate(0,0) scale(1)}
+  60%{opacity:1;transform:translate(var(--dx),var(--dy)) scale(.6)}
+  100%{opacity:0;transform:translate(var(--dx),var(--dy)) scale(.3)}
+}
+
+/* 接收波纹 */
+.receive-ripple{
+  position:absolute;width:100%;height:3px;
+  background:rgba(255,255,255,.4);border-radius:50%;
+  animation:rippleUp .35s ease-out forwards;pointer-events:none;z-index:5;
+}
+@keyframes rippleUp{
+  0%{transform:scaleY(0);opacity:1}
+  100%{transform:scaleY(3);opacity:0}
+}
+
+/* ========== 底部控制 ========== */
+.controls{
+  display:flex;gap:8px;padding:10px 0 4px;flex-shrink:0;z-index:2;
+  justify-content:center;flex-wrap:wrap;
+}
+.btn{
+  padding:10px 16px;border:none;border-radius:20px;font-size:13px;
+  font-weight:700;cursor:pointer;transition:all .2s;
+  font-family:inherit;-webkit-tap-highlight-color:transparent;
+  display:flex;align-items:center;gap:4px;
+  background:rgba(255,255,255,.1);color:rgba(255,255,255,.85);
+  backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.1);
+}
+.btn:active{transform:scale(0.93)}
+.btn-accent{
+  background:linear-gradient(135deg,rgba(167,139,250,.6),rgba(124,92,252,.6));
+  border-color:rgba(167,139,250,.3);
+}
+.btn-warn{
+  background:linear-gradient(135deg,rgba(251,191,36,.5),rgba(245,158,11,.5));
+}
+.btn-empty{
+  background:linear-gradient(135deg,rgba(46,213,115,.5),rgba(39,174,96,.5));
+  font-size:15px;padding:10px 16px;
+}
+
+/* ========== 弹窗通用 ========== */
+.overlay{
+  position:fixed;top:0;left:0;width:100%;height:100%;
+  background:rgba(0,0,0,.55);display:flex;justify-content:center;
+  align-items:center;z-index:200;animation:fadeIn .2s;
+  backdrop-filter:blur(6px);
+}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.card{
+  background:rgba(30,25,50,.95);border-radius:24px;padding:28px 22px;text-align:center;
+  max-width:360px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,.4);
+  border:1px solid rgba(255,255,255,.1);
+  animation:slideUp .4s cubic-bezier(.4,0,.2,1);
+  color:#fff;
+}
+@keyframes slideUp{from{transform:translateY(30px);opacity:0}to{transform:translateY(0);opacity:1}}
+
+.win-title{font-size:30px;color:#c4a6ff;margin-bottom:4px;font-weight:800}
+.win-subtitle{font-size:14px;color:rgba(255,255,255,.6);margin-bottom:12px}
+.win-stars{font-size:44px;margin-bottom:16px;line-height:1}
+.win-buttons{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+
+/* ========== 密码弹窗 ========== */
+.pwd-input{
+  width:100%;padding:12px 16px;border-radius:14px;border:1px solid rgba(255,255,255,.2);
+  background:rgba(255,255,255,.08);color:#fff;font-size:16px;text-align:center;
+  font-family:inherit;outline:none;margin:12px 0;
+}
+.pwd-input:focus{border-color:#a78bfa;box-shadow:0 0 0 3px rgba(167,139,250,.2)}
+.pwd-error{color:#ff6b6b;font-size:13px;margin-top:4px;display:none}
+
+/* ========== 教程 ========== */
+.tutorial-card{
+  background:rgba(30,25,50,.95);border-radius:24px;padding:0 0 24px 0;text-align:center;
+  max-width:380px;width:92%;box-shadow:0 20px 60px rgba(0,0,0,.4);
+  border:1px solid rgba(255,255,255,.1);overflow:hidden;
+  animation:slideUp .4s cubic-bezier(.4,0,.2,1);color:#fff;
+}
+.tutorial-header{
+  background:linear-gradient(135deg,rgba(167,139,250,.8),rgba(124,92,252,.8));
+  padding:24px 20px 20px;position:relative;
+}
+.tutorial-skip{
+  position:absolute;top:10px;right:14px;
+  background:rgba(255,255,255,.15);color:#fff;border:none;
+  padding:4px 12px;border-radius:12px;font-size:12px;cursor:pointer;font-family:inherit;
+}
+.tutorial-icon{font-size:44px;margin-bottom:6px}
+.tutorial-title{font-size:22px;font-weight:800;margin-bottom:2px}
+.tutorial-step-title{font-size:14px;font-weight:600;opacity:.85}
+.tutorial-body{padding:20px 18px 0}
+.tutorial-demo{display:flex;justify-content:center;align-items:center;gap:14px;padding:12px 0;min-height:100px}
+.demo-bottle{
+  width:44px;height:85px;background:rgba(255,255,255,.05);
+  border:1.5px solid rgba(255,255,255,.15);border-radius:6px 6px 16px 16px;
+  overflow:hidden;display:flex;flex-direction:column-reverse;
+}
+.demo-bottle.highlight{border-color:#a78bfa;box-shadow:0 0 12px rgba(167,139,250,.3)}
+.tutorial-text{font-size:15px;color:rgba(255,255,255,.85);line-height:1.7;margin:0 0 14px}
+.tutorial-dots{display:flex;gap:6px;justify-content:center;margin-bottom:16px}
+.tutorial-dot{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.2);transition:all .3s}
+.tutorial-dot.active{background:#a78bfa;width:20px;border-radius:4px}
+
+/* ========== 关卡选择 ========== */
+.level-select-card{
+  background:rgba(30,25,50,.95);border-radius:20px;padding:22px 18px;
+  max-width:400px;width:92%;max-height:80vh;overflow-y:auto;
+  box-shadow:0 20px 60px rgba(0,0,0,.4);border:1px solid rgba(255,255,255,.1);
+  color:#fff;
+}
+.level-select-title{font-size:19px;font-weight:800;text-align:center;margin-bottom:16px}
+.level-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:7px}
+.level-btn{
+  width:100%;aspect-ratio:1;border:none;border-radius:12px;
+  font-size:15px;font-weight:700;cursor:pointer;
+  transition:all .2s;font-family:inherit;
+  display:flex;flex-direction:column;align-items:center;
+  justify-content:center;gap:1px;
+}
+.level-btn.unlocked{background:rgba(167,139,250,.2);color:#c4a6ff}
+.level-btn.unlocked:active{background:rgba(167,139,250,.4);transform:scale(0.92)}
+.level-btn.locked{background:rgba(255,255,255,.05);color:rgba(255,255,255,.2);cursor:not-allowed}
+.level-btn.current{
+  background:linear-gradient(135deg,rgba(167,139,250,.6),rgba(124,92,252,.6));
+  color:#fff;box-shadow:0 4px 16px rgba(124,92,252,.3);
+}
+.level-btn .lvl-name{font-size:9px;opacity:.7;line-height:1}
+.level-btn .lvl-stars{font-size:9px;line-height:1}
+.close-btn{
+  display:block;margin:16px auto 0;padding:10px 28px;
+  background:rgba(255,255,255,.1);color:rgba(255,255,255,.8);border:none;
+  border-radius:18px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;
+}
+
+/* ========== 特效层 ========== */
+.fx-layer{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:300}
+.firework-particle{
+  position:absolute;width:6px;height:6px;border-radius:50%;
+  animation:fireworkBurst .8s ease-out forwards;
+}
+@keyframes fireworkBurst{
+  0%{transform:translate(0,0) scale(1);opacity:1}
+  100%{transform:translate(var(--fx),var(--fy)) scale(0);opacity:0}
+}
+.confetti-piece{
+  position:absolute;animation:confettiDrop linear forwards;
+}
+@keyframes confettiDrop{
+  0%{transform:translateY(-60px) rotate(0deg) scale(1);opacity:1}
+  70%{opacity:1}
+  100%{transform:translateY(105vh) rotate(720deg) scale(.4);opacity:0}
+}
+
+@media(max-width:380px){
+  .bottle-body{width:44px;height:100px}.bottle-neck{width:22px;height:12px}
+}
+</style>
+</head>
+<body>
+
+<canvas id="bgCanvas"></canvas>
+
+<div class="game-container">
+  <div class="top-bar">
+    <div class="level-info"><span class="lv">第</span><span id="levelNum">1</span><span class="lv">关</span></div>
+    <div class="star-row" id="starRow">
+      <span class="star">⭐</span><span class="star">⭐</span><span class="star">⭐</span>
+    </div>
+    <div class="move-info">步数 <span id="moveCount">0</span></div>
+  </div>
+  <div class="level-hint" id="levelHint"></div>
+  <div class="bottles-area" id="bottlesArea"></div>
+  <div class="controls">
+    <button class="btn" onclick="undo()">↩ 撤销</button>
+    <button class="btn" onclick="resetLevel()">🔄 重置</button>
+    <button class="btn btn-warn" onclick="showHint()">💡 提示</button>
+    <button class="btn btn-empty" onclick="showEmptyBottleModal()">🧴 +空瓶</button>
+    <button class="btn btn-accent" onclick="showLevelSelect()">📋 选关</button>
+  </div>
+</div>
+
+<div class="overlay" id="winOverlay" style="display:none">
+  <div class="card">
+    <div class="win-title" id="winTitle"></div>
+    <div class="win-subtitle" id="winSubtitle"></div>
+    <div class="win-stars" id="winStars"></div>
+    <div class="win-buttons">
+      <button class="btn" onclick="resetLevel()" style="color:#fff">再玩一次</button>
+      <button class="btn btn-accent" id="btnNext" onclick="nextLevel()">下一关 ▶</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="tutorialOverlay">
+  <div class="tutorial-card">
+    <div class="tutorial-header">
+      <button class="tutorial-skip" onclick="closeTutorial()">跳过</button>
+      <div class="tutorial-icon" id="tutIcon">🧪</div>
+      <div class="tutorial-title">颜色分拣大师</div>
+      <div class="tutorial-step-title" id="tutStepTitle">欢迎来到色彩世界</div>
+    </div>
+    <div class="tutorial-body">
+      <div class="tutorial-text" id="tutText"></div>
+      <div class="tutorial-demo" id="tutDemo"></div>
+      <div class="tutorial-dots" id="tutDots"></div>
+      <button class="btn btn-accent" id="tutBtn" onclick="nextTutorialStep()" style="margin:0 auto;display:block">
+        下一步
+      </button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="levelSelectOverlay" style="display:none">
+  <div class="level-select-card">
+    <div class="level-select-title">📋 选择关卡</div>
+    <div class="level-grid" id="levelGrid"></div>
+    <button class="close-btn" onclick="closeLevelSelect()">关闭</button>
+  </div>
+</div>
+
+<div class="overlay" id="pwdOverlay" style="display:none">
+  <div class="card">
+    <div style="font-size:30px;margin-bottom:8px">🧴</div>
+    <div style="font-size:18px;font-weight:800;margin-bottom:4px">申请一个空瓶子</div>
+    <div style="font-size:13px;color:rgba(255,255,255,.5);margin-bottom:10px">请说出通关口令</div>
+    <input class="pwd-input" id="pwdInput" type="text" placeholder="输入口令..." autocomplete="off">
+    <div class="pwd-error" id="pwdError">口令不对哦，再试试~</div>
+    <button class="btn btn-accent" onclick="checkPassword()" style="margin-top:8px;width:100%;justify-content:center">确认</button>
+    <button class="btn" onclick="closePwdModal()" style="margin-top:6px;width:100%;justify-content:center;color:rgba(255,255,255,.5)">取消</button>
+  </div>
+</div>
+
+<div class="fx-layer" id="fxLayer"></div>
+
+<script>
+// ==================== 颜色配置 ====================
+const COLORS = [
+  {name:'玫红',hex:'#ff3b6e',light:'#ff6b93',dark:'#d42a55',glow:'rgba(255,59,110,.6)'},
+  {name:'琥珀',hex:'#ff8c3a',light:'#ffab6e',dark:'#e07020',glow:'rgba(255,140,58,.6)'},
+  {name:'金黄',hex:'#ffc940',light:'#ffda70',dark:'#e0ac20',glow:'rgba(255,201,64,.6)'},
+  {name:'翠绿',hex:'#3ddc84',light:'#6eeca8',dark:'#28b865',glow:'rgba(61,220,132,.6)'},
+  {name:'天蓝',hex:'#4da6ff',light:'#7dc2ff',dark:'#3585e0',glow:'rgba(77,166,255,.6)'},
+  {name:'紫罗兰',hex:'#a06ee0',light:'#c49af0',dark:'#7f4fc0',glow:'rgba(160,110,224,.6)'},
+  {name:'桃粉',hex:'#ff6b9d',light:'#ff90b8',dark:'#e05580',glow:'rgba(255,107,157,.6)'},
+  {name:'青碧',hex:'#2dd4bf',light:'#5ee8d6',dark:'#1aad9c',glow:'rgba(45,212,191,.6)'},
+];
+
+const LEVEL_CONFIGS = [
+  {colors:2,layers:2,empty:1,name:'入门'},{colors:3,layers:2,empty:1,name:'简单'},
+  {colors:3,layers:3,empty:1,name:'热身'},{colors:4,layers:3,empty:1,name:'进阶'},
+  {colors:4,layers:4,empty:1,name:'思考'},{colors:5,layers:4,empty:1,name:'挑战'},
+  {colors:5,layers:4,empty:1,name:'脑力'},{colors:6,layers:4,empty:1,name:'烧脑'},
+  {colors:6,layers:5,empty:1,name:'大师'},{colors:7,layers:5,empty:1,name:'专家'},
+  {colors:7,layers:5,empty:1,name:'传说'},{colors:8,layers:5,empty:1,name:'地狱'},
+  {colors:8,layers:5,empty:2,name:'噩梦'},{colors:8,layers:6,empty:2,name:'深渊'},
+  {colors:8,layers:6,empty:2,name:'天堂'},
+];
+const TOTAL_LEVELS=LEVEL_CONFIGS.length;
+
+// ==================== 游戏状态 ====================
+let bottles=[],selectedBottle=-1,moves=0,currentLevel=1,maxLayers=4;
+let history=[],levelStars={},isAnimating=false,tutorialShown=false;
+let bottlePositions=[];
+
+function loadProgress(){
+  try{const s=localStorage.getItem('ws_progress_v2');if(s)levelStars=JSON.parse(s)}catch(e){levelStars={}}
+}
+function saveProgress(){
+  try{localStorage.setItem('ws_progress_v2',JSON.stringify(levelStars))}catch(e){}
+}
+
+// ==================== 粒子背景 ====================
+function initBackground(){
+  const c=document.getElementById('bgCanvas'),ctx=c.getContext('2d');
+  let W,H,particles=[];
+  function resize(){W=c.width=window.innerWidth;H=c.height=window.innerHeight}
+  resize();window.addEventListener('resize',resize);
+
+  const cols=['#a78bfa','#7c5cfc','#ff6b9d','#3ddc84','#4da6ff','#ffc940','#ff8c3a','#2dd4bf'];
+  for(let i=0;i<45;i++){
+    particles.push({
+      x:Math.random()*W,y:Math.random()*H,
+      r:2+Math.random()*6,
+      vx:(Math.random()-.5)*.3,vy:-(.2+Math.random()*.5),
+      c:cols[Math.floor(Math.random()*cols.length)],
+      alpha:.08+Math.random()*.12
+    });
+  }
+
+  function draw(){
+    ctx.clearRect(0,0,W,H);
+    for(const p of particles){
+      p.x+=p.vx;p.y+=p.vy;
+      if(p.x<0)p.x=W;if(p.x>W)p.x=0;
+      if(p.y<-20)p.y=H+20;
+      ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+      ctx.fillStyle=p.c;ctx.globalAlpha=p.alpha;ctx.fill();
+    }
+    ctx.globalAlpha=1;
+    requestAnimationFrame(draw);
+  }
+  draw();
+}
+
+// ==================== 关卡生成 ====================
+function generateLevel(lv){
+  const cfg=LEVEL_CONFIGS[lv-1];maxLayers=cfg.layers;
+  const total=cfg.colors+cfg.empty;
+
+  for(let attempt=0;attempt<50;attempt++){
+    const sorted=[];
+    for(let c=0;c<cfg.colors;c++)sorted.push(new Array(cfg.layers).fill(c));
+    for(let e=0;e<cfg.empty;e++)sorted.push([]);
+    let state=sorted.map(b=>[...b]);
+
+    const rounds=20+cfg.colors*18+Math.floor(Math.random()*20);
+    for(let r=0;r<rounds;r++){
+      const nonEmpty=[];for(let i=0;i<total;i++)if(state[i].length>0)nonEmpty.push(i);
+      if(!nonEmpty.length)break;
+      const from=nonEmpty[Math.floor(Math.random()*nonEmpty.length)];
+      const targets=[];for(let i=0;i<total;i++)if(i!==from&&state[i].length<maxLayers)targets.push(i);
+      if(!targets.length)break;
+      state[targets[Math.floor(Math.random()*targets.length)]].push(state[from].pop());
+    }
+
+    const isSorted=state.every(b=>!b.length||(b.length===maxLayers&&b.every(c=>c===b[0])));
+    if(isSorted)continue;
+    if(checkSolvable(state,cfg.colors,maxLayers))return state;
+  }
+
+  const fb=[];for(let c=0;c<cfg.colors;c++)fb.push(new Array(cfg.layers).fill(c));
+  for(let e=0;e<cfg.empty;e++)fb.push([]);return fb;
+}
+
+function checkSolvable(startState,numColors,layers){
+  const totalBottles=startState.length;
+  const MAX_NODES=80000,MAX_DEPTH=120;
+  const visited=new Set(),queue=[{s:startState.map(b=>[...b]),d:0}];
+  visited.add(JSON.stringify(startState));
+  while(queue.length>0&&visited.size<MAX_NODES){
+    const{s,d}=queue.shift();
+    if(s.every(b=>!b.length||(b.length===layers&&b.every(c=>c===b[0]))))return true;
+    if(d>=MAX_DEPTH)continue;
+    for(let f=0;f<totalBottles;f++){
+      if(!s[f].length)continue;
+      const tc=s[f][s[f].length-1];
+      for(let t=0;t<totalBottles;t++){
+        if(f===t||s[t].length>=layers)continue;
+        if(s[t].length>0&&s[t][s[t].length-1]!==tc)continue;
+        const ns=s.map(b=>[...b]);
+        let cnt=0;for(let i=ns[f].length-1;i>=0&&ns[f][i]===tc;i--)cnt++;
+        const act=Math.min(cnt,layers-ns[t].length);
+        for(let i=0;i<act;i++)ns[t].push(ns[f].pop());
+        const key=JSON.stringify(ns);
+        if(!visited.has(key)){visited.add(key);queue.push({s:ns,d:d+1})}
+      }
+    }
+  }
+  return false;
+}
+
+// ==================== 倒水逻辑 ====================
+function canPourTo(f,t){
+  if(f===t||!bottles[f].length||bottles[t].length>=maxLayers)return false;
+  if(!bottles[t].length)return true;
+  return bottles[t][bottles[t].length-1]===bottles[f][bottles[f].length-1];
+}
+function pourTo(f,t){
+  let col=bottles[f][bottles[f].length-1],cnt=0;
+  for(let i=bottles[f].length-1;i>=0&&bottles[f][i]===col;i--)cnt++;
+  let act=Math.min(cnt,maxLayers-bottles[t].length);
+  history.push({bottles:bottles.map(b=>[...b]),moves});
+  for(let i=0;i<act;i++)bottles[t].push(bottles[f].pop());
+  moves++;return act;
+}
+function checkWin(){
+  return bottles.every(b=>!b.length||(b.length===maxLayers&&b.every(c=>c===b[0])));
+}
+
+// ==================== 瓶子随机位置计算 ====================
+function calcBottlePositions(count){
+  const area=document.getElementById('bottlesArea');
+  const aw=area.clientWidth,ah=area.clientHeight;
+  const positions=[];
+  const bw=66,bh=158; // 含标签的预估尺寸
+  const pad=10;
+
+  if(count<=6){
+    // 2行布局
+    const perRow=Math.ceil(count/2);
+    for(let i=0;i<count;i++){
+      const row=Math.floor(i/perRow),col=i%perRow;
+      const totalInRow=row===0?perRow:(count-perRow);
+      const startX=(aw-totalInRow*bw)/2;
+      const x=startX+col*bw+(Math.random()-.5)*18;
+      const y=20+row*(bh+pad)+(Math.random()-.5)*16;
+      positions.push({x:Math.max(4,Math.min(aw-bw,x)),y:Math.max(4,Math.min(ah-bh,y))});
+    }
+  }else{
+    // 散点布局
+    const rows=Math.ceil(count/5);
+    for(let i=0;i<count;i++){
+      const row=Math.floor(i/5),col=i%5;
+      const colsInRow=Math.min(5,count-row*5);
+      const startX=(aw-colsInRow*bw)/2;
+      const x=startX+col*bw+(Math.random()-.3)*20;
+      const y=8+row*(bh+pad-4)+(Math.random()-.4)*14;
+      positions.push({x:Math.max(4,Math.min(aw-bw,x)),y:Math.max(4,Math.min(ah-bh,y))});
+    }
+  }
+  return positions;
+}
+
+// ==================== 渲染 ====================
+function render(){
+  const area=document.getElementById('bottlesArea');
+  bottlePositions=calcBottlePositions(bottles.length);
+  let html='';
+  for(let i=0;i<bottles.length;i++){
+    const b=bottles[i],pos=bottlePositions[i],sel=i===selectedBottle?' selected':'';
+    const done=b.length===maxLayers&&b.length>0&&b.every(c=>c===b[0]);
+    const dColor=done?COLORS[b[0]]:null;
+    const glowCls=done?' full-glow':'';
+    const glowStyle=dColor?`--glow-color:${dColor.glow}`:'';
+
+    html+=`<div class="bottle-wrapper${sel}${glowCls}" data-idx="${i}"
+      style="left:${pos.x}px;top:${pos.y}px;${glowStyle}">`;
+    html+='<div class="bottle-neck"></div>';
+    html+='<div class="bottle-body" id="bottleBody'+i+'">';
+
+    // 同色合并渲染
+    let arr=[],j=0;
+    while(j<b.length){
+      let color=b[j],cnt=1;
+      while(j+cnt<b.length&&b[j+cnt]===color)cnt++;
+      arr.push({color,count:cnt});j+=cnt;
+    }
+    const totalFilled=b.length;
+    for(const seg of arr){
+      const c=COLORS[seg.color];
+      const pct=(seg.count/maxLayers*100);
+      html+=`<div class="color-block" style="height:${pct}%;background:linear-gradient(180deg,${c.light} 0%,${c.hex} 40%,${c.dark} 100%)"></div>`;
+    }
+    if(totalFilled<maxLayers){
+      const emptyPct=((maxLayers-totalFilled)/maxLayers*100);
+      html+=`<div class="color-block" style="height:${emptyPct}%"></div>`;
+    }
+    html+='</div>';
+    if(done)html+=`<div class="bottle-label done">✦ 完成</div>`;
+    else if(b.length>0)html+=`<div class="bottle-label">${b.length}/${maxLayers}</div>`;
+    else html+=`<div class="bottle-label empty">空瓶</div>`;
+    html+='</div>';
+  }
+  area.innerHTML=html;
+  document.getElementById('moveCount').textContent=moves;
+  document.getElementById('levelNum').textContent=currentLevel;
+  updateStarsDisplay();updateLevelHint();
+}
+
+function updateStarsDisplay(){
+  const stars=levelStars[currentLevel]||0;
+  document.querySelectorAll('#starRow .star').forEach((el,i)=>{
+    if(i<stars)el.classList.add('earned');else el.classList.remove('earned')});
+}
+function updateLevelHint(){
+  const cfg=LEVEL_CONFIGS[currentLevel-1];
+  const hint=document.getElementById('levelHint');
+  let dots='';
+  for(let i=0;i<cfg.colors;i++)dots+=`<span class="dot" style="background:${COLORS[i].hex};box-shadow:0 0 6px ${COLORS[i].glow}"></span>`;
+  hint.innerHTML=`${dots} ${cfg.colors}色 · ${cfg.layers}层 · ${cfg.name}`;
+}
+
+// ==================== 倒水动画 ====================
+function animatePour(fromIdx,toIdx,callback){
+  const area=document.getElementById('bottlesArea');
+  const fromEl=area.querySelector(`[data-idx="${fromIdx}"]`);
+  const toEl=area.querySelector(`[data-idx="${toIdx}"]`);
+  if(!fromEl||!toEl){callback();return;}
+
+  const fromRect=fromEl.getBoundingClientRect();
+  const toRect=toEl.getBoundingClientRect();
+
+  // 倾斜源瓶
+  fromEl.classList.add('pouring');
+
+  // 水滴粒子
+  const fx=document.getElementById('fxLayer');
+  const color=COLORS[bottles[fromIdx][bottles[fromIdx].length-1]];
+  const fromCX=fromRect.left+fromRect.width/2,fromCY=fromRect.top+16;
+  const toCX=toRect.left+toRect.width/2,toCY=toRect.top+toRect.height*.3;
+  const dx=toCX-fromCX,dy=toCY-fromCY;
+
+  for(let i=0;i<6;i++){
+    setTimeout(()=>{
+      const d=document.createElement('div');d.className='pour-droplet';
+      d.style.left=fromCX+'px';d.style.top=fromCY+'px';
+      d.style.background=color.hex;
+      d.style.setProperty('--dx',dx+'px');d.style.setProperty('--dy',dy+'px');
+      d.style.animationDelay=(i*.03)+'s';
+      fx.appendChild(d);
+      setTimeout(()=>d.remove(),500);
+    },i*40);
+  }
+
+  // 目标瓶波纹
+  setTimeout(()=>{
+    const targetBody=toEl.querySelector('.bottle-body');
+    if(targetBody){
+      const ripple=document.createElement('div');ripple.className='receive-ripple';
+      targetBody.appendChild(ripple);
+      setTimeout(()=>ripple.remove(),400);
+    }
+  },200);
+
+  setTimeout(()=>{
+    fromEl.classList.remove('pouring');
+    callback();
+  },400);
+}
+
+// ==================== 交互 ====================
+function handleBottleClick(idx){
+  if(isAnimating||idx<0||idx>=bottles.length)return;
+  if(selectedBottle===-1){
+    if(bottles[idx].length>0){
+      const b=bottles[idx],done=b.length===maxLayers&&b.every(c=>c===b[0]);
+      if(!done)selectedBottle=idx;
+    }
+  }else if(selectedBottle===idx){selectedBottle=-1}
+  else{
+    if(canPourTo(selectedBottle,idx)){
+      isAnimating=true;
+      const from=selectedBottle,to=idx;
+      selectedBottle=-1;render();
+      animatePour(from,to,()=>{
+        pourTo(from,to);render();
+        isAnimating=false;
+        if(checkWin())onWin();
+      });
+      return;
+    }else{
+      const wrappers=document.querySelectorAll('.bottle-wrapper');
+      wrappers[idx].classList.add('shake');
+      setTimeout(()=>wrappers[idx]&&wrappers[idx].classList.remove('shake'),400);
+      const b=bottles[idx],done=b.length===maxLayers&&b.every(c=>c===b[0]);
+      selectedBottle=(b.length>0&&!done)?idx:-1;
+    }
+  }
+  render();
+}
+document.getElementById('bottlesArea').addEventListener('click',function(e){
+  const w=e.target.closest('.bottle-wrapper');if(w)handleBottleClick(parseInt(w.dataset.idx));
+});
+
+// ==================== 提示 ====================
+function showHint(){
+  if(isAnimating)return;
+  const wrappers=document.querySelectorAll('.bottle-wrapper');
+  wrappers.forEach(w=>w.classList.remove('hint-pulse'));
+  for(let i=0;i<bottles.length;i++){
+    if(!bottles[i].length)continue;
+    const isDone=bottles[i].length===maxLayers&&bottles[i].every(c=>c===bottles[i][0]);
+    if(isDone)continue;
+    for(let j=0;j<bottles.length;j++){
+      if(canPourTo(i,j)){
+        wrappers[i].classList.add('hint-pulse');
+        wrappers[j].classList.add('hint-pulse');
+        setTimeout(()=>wrappers.forEach(w=>w.classList.remove('hint-pulse')),2500);
+        return;
+      }
+    }
+  }
+}
+
+// ==================== 空瓶口令 ====================
+function showEmptyBottleModal(){
+  document.getElementById('pwdOverlay').style.display='flex';
+  document.getElementById('pwdInput').value='';
+  document.getElementById('pwdError').style.display='none';
+  setTimeout(()=>document.getElementById('pwdInput').focus(),200);
+}
+function closePwdModal(){document.getElementById('pwdOverlay').style.display='none'}
+function checkPassword(){
+  const val=document.getElementById('pwdInput').value.trim();
+  if(val==='得胜最帅了'){
+    closePwdModal();
+    if(isAnimating)return;
+    // 找一个空瓶位置插入
+    const emptyExists=bottles.some(b=>b.length===0);
+    if(emptyExists){
+      spawnFloatText('已经有空瓶啦~');
+      return;
+    }
+    if(bottles.length>=12){
+      spawnFloatText('瓶子太多啦，放不下了');
+      return;
+    }
+    if(bottles.length>=10&&bottles.filter(b=>b.length===0).length>=2){
+      spawnFloatText('已经够用啦~');
+      return;
+    }
+    bottles.push([]);
+    render();
+    spawnFloatText('✨ 口令正确！获得一个空瓶');
+  }else{
+    const err=document.getElementById('pwdError');
+    err.style.display='block';err.textContent='口令不对哦，再试试~';
+    document.getElementById('pwdInput').value='';
+    document.getElementById('pwdInput').focus();
+    document.getElementById('pwdInput').classList.add('shake');
+    setTimeout(()=>document.getElementById('pwdInput').classList.remove('shake'),400);
+  }
+}
+document.getElementById('pwdInput').addEventListener('keydown',function(e){
+  if(e.key==='Enter')checkPassword();
+});
+document.getElementById('pwdOverlay').addEventListener('click',function(e){
+  if(e.target===this)closePwdModal();
+});
+
+function spawnFloatText(msg){
+  const el=document.createElement('div');
+  el.textContent=msg;el.style.cssText=`
+    position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
+    font-size:18px;font-weight:700;color:#fff;z-index:400;pointer-events:none;
+    background:rgba(124,92,252,.9);padding:10px 24px;border-radius:20px;
+    animation:floatUpText 2s ease-out forwards;
+  `;
+  document.body.appendChild(el);
+  setTimeout(()=>el.remove(),2200);
+}
+const ftStyle=document.createElement('style');
+ftStyle.textContent=`@keyframes floatUpText{0%{opacity:0;transform:translate(-50%,-50%) scale(.8)}20%{opacity:1;transform:translate(-50%,-50%) scale(1.1)}40%{transform:translate(-50%,-50%) scale(1)}80%{opacity:1;transform:translate(-50%,-80%)}100%{opacity:0;transform:translate(-50%,-120%)}}`;
+document.head.appendChild(ftStyle);
+
+// ==================== 控制 ====================
+function undo(){if(isAnimating||!history.length)return;const p=history.pop();bottles=p.bottles;moves=p.moves;selectedBottle=-1;render()}
+function resetLevel(){if(isAnimating)return;initLevel(currentLevel);hideWin()}
+function nextLevel(){if(currentLevel<TOTAL_LEVELS){currentLevel++;initLevel(currentLevel);hideWin()}}
+function hideWin(){document.getElementById('winOverlay').style.display='none'}
+
+function showLevelSelect(){
+  const o=document.getElementById('levelSelectOverlay'),g=document.getElementById('levelGrid');
+  o.style.display='flex';let html='';
+  for(let i=1;i<=TOTAL_LEVELS;i++){
+    const stars=levelStars[i]||0,unlocked=isLevelUnlocked(i),isCur=i===currentLevel;
+    let cls=isCur?'current':unlocked?'unlocked':'locked';
+    html+=`<button class="level-btn ${cls}" ${(unlocked||isCur)?`onclick="selectLevel(${i})"`:''}>
+      <span style="font-size:17px">${i}</span>
+      <span class="lvl-name">${LEVEL_CONFIGS[i-1].name}</span>
+      <span class="lvl-stars">${'⭐'.repeat(stars)}${'☆'.repeat(3-stars)}</span>
+    </button>`;
+  }
+  g.innerHTML=html;
+}
+function closeLevelSelect(){document.getElementById('levelSelectOverlay').style.display='none'}
+function selectLevel(lv){if(!isLevelUnlocked(lv))return;closeLevelSelect();if(lv===currentLevel)resetLevel();else{currentLevel=lv;initLevel(currentLevel);hideWin()}}
+function isLevelUnlocked(lv){return lv===1||(levelStars[lv-1]||0)>=1}
+
+document.getElementById('levelSelectOverlay').addEventListener('click',function(e){
+  if(e.target===this)closeLevelSelect();
+});
+document.getElementById('winOverlay').addEventListener('click',function(e){
+  if(e.target===this)hideWin();
+});
+
+// ==================== 胜利特效 ====================
+function onWin(){
+  const cfg=LEVEL_CONFIGS[currentLevel-1];
+  const bCopy=bottles.map(b=>[...b]);
+  let minMoves=0;const allC=new Set();bCopy.forEach(b=>b.forEach(c=>allC.add(c)));
+  bCopy.forEach(b=>{if(b.length&&!b.every(c=>c===b[0]))minMoves+=b.length});
+  minMoves=Math.max(Math.floor(minMoves*.7),minMoves-allC.size);
+  const ratio=minMoves>0?moves/minMoves:99,stars=ratio<=1.3?3:ratio<=1.8?2:1;
+  levelStars[currentLevel]=Math.max(levelStars[currentLevel]||0,stars);saveProgress();updateStarsDisplay();
+
+  setTimeout(()=>{
+    const msgs=['太棒了！','完美通关！','颜色大师！','一气呵成！'];
+    document.getElementById('winTitle').textContent=msgs[Math.floor(Math.random()*msgs.length)];
+    document.getElementById('winSubtitle').textContent=`第 ${currentLevel} 关 · ${moves} 步完成`;
+    document.getElementById('winStars').textContent='⭐'.repeat(stars);
+    document.getElementById('btnNext').style.display=currentLevel<TOTAL_LEVELS?'':'none';
+    document.getElementById('winOverlay').style.display='flex';
+    // 特效序列
+    spawnConfetti();
+    setTimeout(()=>spawnFireworks(),300);
+    setTimeout(()=>spawnConfetti(),600);
+    if(stars===3)setTimeout(()=>spawnFireworks(),900);
+  },500);
+}
+
+// 彩纸
+function spawnConfetti(){
+  const fx=document.getElementById('fxLayer');
+  const cols=['#ff3b6e','#ffc940','#3ddc84','#4da6ff','#a06ee0','#ff6b9d','#2dd4bf','#ff8c3a'];
+  for(let i=0;i<60;i++){
+    const el=document.createElement('div');el.className='confetti-piece';
+    el.style.left=Math.random()*100+'%';el.style.top=-(Math.random()*60)+'px';
+    const s=6+Math.random()*10;
+    el.style.width=s+'px';el.style.height=(s*(.6+Math.random()*.8))+'px';
+    el.style.background=cols[Math.floor(Math.random()*cols.length)];
+    el.style.animationDuration=(2.5+Math.random()*3)+'s';
+    el.style.animationDelay=Math.random()*.5+'s';
+    el.style.borderRadius=Math.random()>.5?'50%':'2px';
+    el.style.transform='rotate('+(Math.random()*360)+'deg)';
+    fx.appendChild(el);setTimeout(()=>el.remove(),4000);
+  }
+}
+
+// 烟花
+function spawnFireworks(){
+  const fx=document.getElementById('fxLayer');
+  const cols=['#ff3b6e','#ffc940','#3ddc84','#4da6ff','#a06eea','#ff6b9d','#2dd4bf','#ff8c3a'];
+  const cx=30+Math.random()*40,cy=20+Math.random()*40;
+  for(let i=0;i<18;i++){
+    const el=document.createElement('div');el.className='firework-particle';
+    el.style.left=cx+'%';el.style.top=cy+'%';
+    el.style.width=el.style.height=(4+Math.random()*5)+'px';
+    el.style.background=cols[Math.floor(Math.random()*cols.length)];
+    const angle=(i/18)*Math.PI*2,dist=50+Math.random()*80;
+    el.style.setProperty('--fx',Math.cos(angle)*dist+'px');
+    el.style.setProperty('--fy',Math.sin(angle)*dist+'px');
+    el.style.animationDuration='.7s';
+    fx.appendChild(el);setTimeout(()=>el.remove(),800);
+  }
+}
+
+// ==================== 新手引导 ====================
+const TUTORIAL_STEPS=[
+  {icon:'🧪',title:'欢迎来到色彩世界',text:'把不同颜色的液体分拣到各自的瓶子里。<br>每种颜色装满一瓶就完成啦！',demo:'goal'},
+  {icon:'👆',title:'点击瓶子选中',text:'<b>点击</b>一个有颜色且未装满的瓶子，<br>它会浮起来轻轻摇晃，表示已选中。',demo:'select'},
+  {icon:'🫗',title:'倒到另一个瓶子',text:'再<b>点击</b>另一个同色或空瓶子，<br>液体会带着水滴动画流过去。<br>相同颜色会直接融为一体。',demo:'pour'},
+  {icon:'📏',title:'记住规则',text:'只有<b>顶部颜色相同</b>才能互倒。<br>空瓶可以接收任何颜色。<br>装满的瓶子不能再动。',demo:'rules'},
+  {icon:'🎯',title:'准备好了吗？',text:'遇到困难用💡提示。<br>瓶子不够？用🧴申请空瓶。<br>操作失误可以↩撤销。<br><br>加油！',demo:'ready'}
+];
+let tutStep=0;
+function showTutorial(){
+  if(tutorialShown)return;
+  tutStep=0;renderTutorialStep();
+  document.getElementById('tutorialOverlay').style.display='flex';
+  tutorialShown=true;
+  try{localStorage.setItem('ws_tutorial','1')}catch(e){}
+}
+function renderTutorialStep(){
+  const s=TUTORIAL_STEPS[tutStep];
+  document.getElementById('tutIcon').textContent=s.icon;
+  document.getElementById('tutStepTitle').textContent=s.title;
+  document.getElementById('tutText').innerHTML=s.text;
+  renderDemo(s.demo);
+  let dots='';
+  for(let i=0;i<TUTORIAL_STEPS.length;i++)dots+=`<div class="tutorial-dot${i===tutStep?' active':''}"></div>`;
+  document.getElementById('tutDots').innerHTML=dots;
+  document.getElementById('tutBtn').textContent=tutStep===TUTORIAL_STEPS.length-1?'开始游戏':'下一步';
+}
+function renderDemo(type){
+  const demo=document.getElementById('tutDemo');
+  const c0=COLORS[0],c1=COLORS[1];
+  function lyr(col,n){let h='';for(let i=0;i<n;i++)h+=`<div style="flex:1;background:linear-gradient(180deg,${col.light},${col.hex})"></div>`;return h}
+  if(type==='goal'){
+    demo.innerHTML=`
+      <div style="text-align:center;color:rgba(255,255,255,.5);font-size:12px">混乱</div>
+      <div class="demo-bottle">${lyr(c0,1)}${lyr(c1,1)}${lyr(c0,1)}${lyr(c1,1)}</div>
+      <div style="color:#c4a6ff;font-size:20px">→</div>
+      <div style="text-align:center;color:#4caf50;font-size:12px">完成</div>
+      <div class="demo-bottle">${lyr(c0,4)}</div>
+      <div class="demo-bottle">${lyr(c1,4)}</div>`;
+  }else if(type==='select'){
+    demo.innerHTML=`
+      <div class="demo-bottle highlight" style="animation:floatSway 2s ease-in-out infinite">${lyr(c0,1)}${lyr(c1,1)}${lyr(c0,1)}${lyr(c1,1)}</div>
+      <div style="color:#c4a6ff;font-size:18px">点击选中</div>`;
+  }else if(type==='pour'){
+    demo.innerHTML=`
+      <div class="demo-bottle">${lyr(c0,1)}${lyr(c1,1)}</div>
+      <div style="color:#c4a6ff;font-size:16px">→</div>
+      <div class="demo-bottle highlight">${lyr(c0,2)}${lyr(c1,1)}</div>`;
+  }else if(type==='rules'){
+    demo.innerHTML=`
+      <div style="text-align:center;font-size:12px">
+        <div style="color:#4caf50;margin-bottom:6px">同色可以倒</div>
+        <div style="display:flex;gap:6px;align-items:center;justify-content:center;margin-bottom:10px">
+          <div class="demo-bottle" style="height:45px">${lyr(c0,1)}</div><span style="color:rgba(255,255,255,.5)">→</span>
+          <div class="demo-bottle" style="height:45px">${lyr(c0,2)}</div>
+        </div>
+        <div style="color:#ff6b6b;margin-bottom:6px">不同色不行</div>
+        <div style="display:flex;gap:6px;align-items:center;justify-content:center">
+          <div class="demo-bottle" style="height:45px">${lyr(c0,1)}</div><span style="color:rgba(255,255,255,.5)">→</span>
+          <div class="demo-bottle" style="height:45px">${lyr(c1,1)}</div>
+        </div>
+      </div>`;
+  }else{
+    demo.innerHTML=`
+      <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center">
+        <span style="background:rgba(255,255,255,.1);color:#fff;padding:5px 12px;border-radius:14px;font-size:12px">💡 提示</span>
+        <span style="background:rgba(255,255,255,.1);color:#fff;padding:5px 12px;border-radius:14px;font-size:12px">🧴 空瓶</span>
+        <span style="background:rgba(255,255,255,.1);color:#fff;padding:5px 12px;border-radius:14px;font-size:12px">↩ 撤销</span>
+      </div>`;
+  }
+}
+function nextTutorialStep(){
+  if(tutStep<TUTORIAL_STEPS.length-1){tutStep++;renderTutorialStep()}
+  else closeTutorial();
+}
+function closeTutorial(){document.getElementById('tutorialOverlay').style.display='none'}
+
+// ==================== 初始化 ====================
+function initLevel(lv){
+  currentLevel=lv;bottles=generateLevel(lv);selectedBottle=-1;moves=0;history=[];isAnimating=false;
+  document.getElementById('levelNum').textContent=lv;
+  document.getElementById('moveCount').textContent='0';
+  updateStarsDisplay();render();
+}
+function init(){
+  loadProgress();initLevel(currentLevel);
+  initBackground();
+  if(!tutorialShown)showTutorial();
+}
+
+// 窗口大小变化时重新渲染
+let resizeTimer;
+window.addEventListener('resize',()=>{
+  clearTimeout(resizeTimer);
+  resizeTimer=setTimeout(()=>{if(!isAnimating)render()},200);
+});
+
+init();
+</script>
+</body>
+</html>
