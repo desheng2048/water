@@ -10,8 +10,8 @@
 *{margin:0;padding:0;box-sizing:border-box}
 
 :root{
-  --bottle-w:52px;--bottle-h:120px;--neck-w:26px;--neck-h:16px;
-  --pig-size:36px;
+  --bottle-w:40px;--bottle-h:92px;--neck-w:20px;--neck-h:12px;
+  --pig-size:28px;
 }
 
 body{
@@ -36,23 +36,83 @@ canvas#bgCanvas{position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;poi
 /* ========== 顶部栏 ========== */
 .top-bar{
   display:flex;justify-content:space-between;align-items:center;
-  padding:6px 12px;flex-shrink:0;z-index:2;
-  background:rgba(255,255,255,.08);backdrop-filter:blur(12px);
-  border-radius:20px;margin-bottom:6px;
+  padding:8px 14px;flex-shrink:0;z-index:2;
+  background:rgba(255,255,255,.06);backdrop-filter:blur(16px);
+  border-radius:24px;margin-bottom:8px;gap:4px;
+  border:1px solid rgba(255,255,255,.06);
 }
 .level-info{font-size:18px;font-weight:800;color:#fff;display:flex;align-items:center;gap:2px}
 .level-info .lv{color:#a78bfa;font-size:13px}
 .move-info{font-size:12px;color:rgba(255,255,255,.7);background:rgba(255,255,255,.1);padding:5px 12px;border-radius:14px}
 .move-info span{color:#c4a6ff;font-size:18px;font-weight:800}
-.star-row{display:flex;gap:2px;padding:3px 8px;border-radius:14px;background:rgba(255,255,255,.1)}
+.star-row{display:flex;gap:2px;padding:4px 6px;border-radius:14px;background:rgba(255,255,255,.08)}
 .star{font-size:16px;opacity:0.2;transition:all .3s;filter:grayscale(1)}
 .star.earned{opacity:1;filter:grayscale(0);animation:starPop .4s ease}
 @keyframes starPop{0%{transform:scale(0) rotate(-30deg)}60%{transform:scale(1.5) rotate(10deg)}100%{transform:scale(1) rotate(0)}}
 
+/* 音效按钮 — 嵌入顶栏 */
+.sound-inline{display:flex;gap:4px;align-items:center;position:relative}
+.sound-inline-btn{
+  width:30px;height:30px;border-radius:50%;
+  background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.12);
+  color:#fff;font-size:13px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  transition:all .2s;padding:0;line-height:1;
+}
+.sound-inline-btn:active{transform:scale(.85)}
+.sound-inline-btn.muted{opacity:.35;background:rgba(255,255,255,.04)}
+
+/* 音量滑块弹窗 — position:fixed, body级别, 始终最上层 */
+.vol-popup{
+  position:fixed;z-index:9999;
+  background:rgba(24,20,44,.97);border-radius:14px;
+  padding:14px 16px;min-width:140px;
+  border:1px solid rgba(255,255,255,.15);
+  box-shadow:0 12px 40px rgba(0,0,0,.6);
+  display:none;flex-direction:column;align-items:center;gap:10px;
+  animation:volSlideIn .18s ease;
+  pointer-events:auto;
+}
+@keyframes volSlideIn{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
+.vol-popup.show{display:flex}
+.vol-popup-label{font-size:11px;color:rgba(255,255,255,.6);display:flex;align-items:center;gap:4px}
+.vol-popup-value{font-size:11px;color:#c4a6ff;font-weight:700;min-width:28px;text-align:right}
+
+/* 自定义滑块 */
+.vol-slider-wrap{display:flex;align-items:center;gap:6px;width:100%}
+.vol-slider{
+  -webkit-appearance:none;appearance:none;
+  flex:1;height:6px;border-radius:3px;
+  background:rgba(255,255,255,.15);
+  outline:none;cursor:pointer;
+  user-select:auto;-webkit-user-select:auto;
+  touch-action:pan-y;
+}
+.vol-slider::-webkit-slider-thumb{
+  -webkit-appearance:none;appearance:none;
+  width:22px;height:22px;border-radius:50%;
+  background:linear-gradient(135deg,#a78bfa,#7c5cfc);
+  cursor:pointer;border:2px solid rgba(255,255,255,.35);
+  box-shadow:0 2px 10px rgba(124,92,252,.5);
+}
+.vol-slider::-moz-range-thumb{
+  width:22px;height:22px;border-radius:50%;
+  background:linear-gradient(135deg,#a78bfa,#7c5cfc);
+  cursor:pointer;border:2px solid rgba(255,255,255,.35);
+}
+
+/* iPad 适配 */
+@media(min-width:700px){
+  .sound-inline-btn{width:36px;height:36px;font-size:16px}
+  .vol-popup{padding:16px 18px;min-width:160px}
+  .vol-popup-label{font-size:13px}.vol-popup-value{font-size:13px}
+  .vol-slider::-webkit-slider-thumb{width:26px;height:26px}
+}
+
 /* ========== 猪猪侠角色行 ========== */
 .pig-row{
-  display:flex;justify-content:center;align-items:center;gap:6px;
-  padding:6px 4px;flex-shrink:0;z-index:2;min-height:52px;
+  display:flex;justify-content:center;align-items:center;  gap:8px;
+  padding:8px 2px;flex-shrink:0;z-index:2;min-height:52px;
   flex-wrap:wrap;
 }
 .pig-char{
@@ -61,6 +121,13 @@ canvas#bgCanvas{position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;poi
   position:relative;
 }
 .pig-char.gone{opacity:0;transform:translateY(-40px) scale(.3);pointer-events:none}
+/* 离开中：抖动预告 */
+.pig-char.leaving{animation:pigShakeBeforeLeave .35s ease 3}
+@keyframes pigShakeBeforeLeave{
+  0%,100%{transform:translateX(0) rotate(0deg)}
+  25%{transform:translateX(-5px) rotate(-4deg)}
+  75%{transform:translateX(5px) rotate(4deg)}
+}
 
 /* 猪头图片 */
 .pig-head-img{
@@ -97,7 +164,29 @@ canvas#bgCanvas{position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;poi
 }
 @keyframes pigPartUp{
   0%{opacity:1;transform:translate(0,0) scale(1)}
+  40%{transform:translate(var(--px),var(--py)) scale(1.5);opacity:.9}
   100%{opacity:0;transform:translate(var(--px),var(--py)) scale(0)}
+}
+/* 猪猪离开星星粒子 */
+.pig-star{
+  position:fixed;width:5px;height:5px;pointer-events:none;z-index:351;
+  clip-path:polygon(50% 0%,61% 35%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 35%);
+  animation:pigStarSpin 1.1s ease-out forwards;
+}
+@keyframes pigStarSpin{
+  0%{transform:translate(0,0) rotate(0deg) scale(1);opacity:1}
+  100%{transform:translate(var(--sx),var(--sy)) rotate(360deg) scale(0);opacity:0}
+}
+/* 猪猪离开闪光 */
+.pig-flash{
+  position:fixed;width:100px;height:100px;border-radius:50%;pointer-events:none;z-index:349;
+  margin-left:-50px;margin-top:-50px;
+  animation:pigFlashPop .6s ease-out forwards;
+}
+@keyframes pigFlashPop{
+  0%{transform:scale(0);opacity:.9}
+  50%{transform:scale(1.3);opacity:.3}
+  100%{transform:scale(2);opacity:0}
 }
 
 .level-hint{
@@ -110,6 +199,7 @@ canvas#bgCanvas{position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;poi
 .bottles-area{
   flex:1;position:relative;z-index:1;min-height:360px;margin:0 -4px;
 }
+.bottles-area.animating .bottle-wrapper{pointer-events:none!important}
 
 /* ========== 瓶子 ========== */
 .bottle-wrapper{
@@ -142,24 +232,28 @@ canvas#bgCanvas{position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;poi
 
 .bottle-body{
   width:var(--bottle-w);height:var(--bottle-h);position:relative;
-  background:linear-gradient(180deg,rgba(255,255,255,.1),rgba(255,255,255,.04));
-  border:2px solid rgba(255,255,255,.2);
+  background:linear-gradient(180deg,rgba(255,255,255,.14),rgba(255,255,255,.04) 40%,rgba(0,0,0,.08) 100%);
+  border:2px solid rgba(255,255,255,.18);
   border-radius:8px 8px 20px 20px;overflow:hidden;
-  backdrop-filter:blur(4px);
+  box-shadow:inset 0 2px 8px rgba(255,255,255,.08),inset 0 -4px 12px rgba(0,0,0,.15),0 4px 16px rgba(0,0,0,.2);
   display:flex;flex-direction:column-reverse;
-  box-shadow:inset 0 0 20px rgba(255,255,255,.05);
   transition:box-shadow .5s;
 }
 .bottle-body::after{
-  content:'';position:absolute;top:6%;left:14%;width:6px;height:28%;
-  background:linear-gradient(180deg,rgba(255,255,255,.55),rgba(255,255,255,0));
+  content:'';position:absolute;top:6%;left:14%;width:6px;height:30%;
+  background:linear-gradient(180deg,rgba(255,255,255,.6),rgba(255,255,255,.05));
   border-radius:3px;pointer-events:none;z-index:10;
+}
+/* 第二道高光 */
+.bottle-body::before{
+  content:'';position:absolute;top:10%;right:18%;width:3px;height:18%;
+  background:rgba(255,255,255,.35);border-radius:2px;pointer-events:none;z-index:10;
 }
 
 .bottle-wrapper.selected .bottle-body{box-shadow:inset 0 0 20px rgba(255,255,255,.05),0 0 20px rgba(167,139,250,.4),0 0 40px rgba(167,139,250,.2)}
 
 .color-block{width:100%;position:relative;transition:height .35s cubic-bezier(.4,0,.2,1)}
-.color-block::after{content:'';position:absolute;top:-1px;left:10%;width:80%;height:3px;background:rgba(255,255,255,.25);border-radius:50%}
+.color-block:not(:empty)::after{content:'';position:absolute;top:0;left:12%;width:76%;height:1px;background:rgba(255,255,255,.3);border-radius:50%}
 
 .bottle-wrapper.full-glow .bottle-body{animation:bottleGlow 2s ease-in-out infinite}
 @keyframes bottleGlow{
@@ -174,26 +268,73 @@ canvas#bgCanvas{position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;poi
 @keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-5px)}40%{transform:translateX(5px)}60%{transform:translateX(-4px)}80%{transform:translateX(3px)}}
 .bottle-wrapper.shake{animation:shake .4s ease}
 
-.bottle-wrapper.hint-pulse .bottle-body{animation:hintGlow 1.2s ease-in-out infinite}
-@keyframes hintGlow{0%,100%{box-shadow:inset 0 0 20px rgba(124,92,252,.1),0 0 10px rgba(124,92,252,.2)}50%{box-shadow:inset 0 0 30px rgba(124,92,252,.2),0 0 25px rgba(124,92,252,.5),0 0 50px rgba(124,92,252,.25)}}
-
-.bottle-wrapper.pouring{animation:pourTilt .55s ease forwards}
-@keyframes pourTilt{0%{transform:rotate(0)}20%{transform:rotate(-22deg)}80%{transform:rotate(-22deg)}100%{transform:rotate(0)}}
+/* 瓶子移动+倒水 */
+.bottle-wrapper.moving{transition:left .45s cubic-bezier(.4,0,.2,1),top .45s cubic-bezier(.4,0,.2,1);z-index:50!important}
+.bottle-wrapper.moving-back{transition:left .5s cubic-bezier(.4,0,.2,1),top .5s cubic-bezier(.4,0,.2,1);z-index:50!important}
+.bottle-wrapper.pouring-move{animation:pourTilt 1.5s ease forwards}
+@keyframes pourTilt{0%{transform:rotate(0)}12%{transform:rotate(-90deg)}100%{transform:rotate(-90deg)}}
 
 /* 倒水效果 */
 .pour-stream-svg{position:fixed;pointer-events:none;z-index:100;top:0;left:0;width:100%;height:100%}
-.pour-stream-svg .liquid-path{fill:none;stroke-linecap:round;stroke-dasharray:var(--plen);stroke-dashoffset:var(--plen);animation:streamReveal .5s ease forwards}
+.pour-stream-svg .liquid-path{fill:none;stroke-linecap:round;stroke-dasharray:var(--plen);stroke-dashoffset:var(--plen);animation:streamReveal .85s ease forwards}
 @keyframes streamReveal{to{stroke-dashoffset:0}}
-.pour-stream-svg .liquid-glow{fill:none;stroke-linecap:round;stroke-dasharray:var(--plen);stroke-dashoffset:var(--plen);animation:streamReveal .5s ease forwards;filter:blur(4px);opacity:.6}
+.pour-stream-svg .liquid-glow{fill:none;stroke-linecap:round;stroke-dasharray:var(--plen);stroke-dashoffset:var(--plen);animation:streamReveal .85s ease forwards;filter:blur(4px);opacity:.6}
 
-.pour-splash{position:fixed;width:6px;height:6px;border-radius:50%;pointer-events:none;z-index:100;animation:splashPop .45s ease-out forwards}
-@keyframes splashPop{0%{transform:translate(0,0) scale(1);opacity:1}100%{transform:translate(var(--sdx),var(--sdy)) scale(0);opacity:0}}
+.pour-splash{position:fixed;width:6px;height:6px;border-radius:50%;pointer-events:none;z-index:100;animation:splashPop .65s ease-out forwards}
+@keyframes splashPop{
+  0%{transform:translate(0,0) scale(.6);opacity:0}
+  15%{transform:translate(calc(var(--sdx)*.35),calc(var(--sdy)*.2)) scale(1.3);opacity:1}
+  45%{transform:translate(calc(var(--sdx)*.7),calc(var(--sdy)*.55)) scale(.9);opacity:.7}
+  100%{transform:translate(var(--sdx),var(--sdy)) scale(0);opacity:0}
+}
 
-.bottle-wrapper .liquid-drain{position:absolute;width:100%;background:rgba(0,0,0,.3);z-index:1;pointer-events:none;border-radius:0 0 18px 18px;animation:drainRise .45s ease forwards}
-@keyframes drainRise{0%{height:0;bottom:0}100%{height:var(--drain-h);bottom:0}}
+/* 大颗水滴 — 沿弧线飞行 */
+.pour-drop{
+  position:fixed;width:9px;height:11px;border-radius:50% 50% 50% 50% / 55% 55% 45% 45%;
+  pointer-events:none;z-index:100;
+  animation:dropFly .65s ease-out forwards;
+}
+@keyframes dropFly{
+  0%{opacity:1;transform:translate(0,0) scale(1.05)}
+  25%{opacity:1;transform:translate(1px,3px) scale(1)}
+  60%{transform:translate(3px,10px) scale(.8);opacity:.7}
+  100%{opacity:0;transform:translate(5px,26px) scale(.15)}
+}
+
+/* 倒水时液面下降 (源瓶) — 渐变遮罩模拟水从瓶口消退 */
+.liquid-drain-overlay{
+  position:absolute;top:0;left:0;width:100%;height:var(--drain-h);
+  background:linear-gradient(180deg,rgba(0,0,0,.05) 0%,rgba(0,0,0,.35) 70%,rgba(0,0,0,.55) 100%);
+  z-index:2;pointer-events:none;
+  border-radius:0;
+  animation:drainGrow .9s ease-in forwards;
+}
+@keyframes drainGrow{0%{height:0;opacity:0}100%{height:var(--drain-h);opacity:1}}
+
+/* 倒水时液面上升 (目标瓶) — 新颜色从底部生长 */
+.liquid-fill-layer{
+  position:absolute;bottom:0;left:0;width:100%;
+  z-index:3;pointer-events:none;
+  border-radius:0;
+  animation:fillGrow .9s ease-out forwards;
+}
+@keyframes fillGrow{0%{height:0;opacity:.4}100%{height:var(--fill-h);opacity:1}}
 
 .receive-ripple{position:absolute;width:100%;height:3px;background:rgba(255,255,255,.5);border-radius:50%;animation:rippleUp .35s ease-out forwards;pointer-events:none;z-index:5}
 @keyframes rippleUp{0%{transform:scaleY(0);opacity:1}100%{transform:scaleY(3);opacity:0}}
+
+/* 撞击溅射水柱 */
+.pour-hit-column{
+  position:fixed;pointer-events:none;z-index:100;
+  border-radius:2px;opacity:.75;
+  animation:splashCol .4s ease-out forwards;
+  transform-origin:bottom center;
+}
+@keyframes splashCol{
+  0%{transform:scaleY(.15) scaleX(.4);opacity:.7}
+  40%{transform:scaleY(1) scaleX(1);opacity:.55}
+  100%{transform:scaleY(.03) scaleX(3);opacity:0}
+}
 
 /* ========== 底部控制 ========== */
 .controls{
@@ -201,34 +342,42 @@ canvas#bgCanvas{position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;poi
   justify-content:center;flex-wrap:wrap;
 }
 .btn{
-  padding:9px 14px;border:none;border-radius:18px;font-size:12px;
-  font-weight:700;cursor:pointer;transition:all .2s;
+  padding:10px 16px;border:none;border-radius:20px;font-size:12px;
+  font-weight:600;cursor:pointer;transition:all .18s;
   font-family:inherit;-webkit-tap-highlight-color:transparent;
-  display:flex;align-items:center;gap:3px;
-  background:rgba(255,255,255,.1);color:rgba(255,255,255,.85);
-  backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.1);
+  display:flex;align-items:center;gap:4px;
+  background:rgba(255,255,255,.08);color:rgba(255,255,255,.85);
+  border:1px solid rgba(255,255,255,.08);
+  box-shadow:0 2px 8px rgba(0,0,0,.1);
 }
 .btn:active{transform:scale(0.93)}
-.btn-accent{background:linear-gradient(135deg,rgba(167,139,250,.6),rgba(124,92,252,.6));border-color:rgba(167,139,250,.3)}
+.btn-accent{
+  background:linear-gradient(135deg,rgba(139,92,246,.55),rgba(109,40,217,.55));
+  border-color:rgba(139,92,246,.25);
+  box-shadow:0 2px 12px rgba(139,92,246,.15);
+}
 .btn-warn{background:linear-gradient(135deg,rgba(251,191,36,.5),rgba(245,158,11,.5))}
-.btn-empty{background:linear-gradient(135deg,rgba(46,213,115,.5),rgba(39,174,96,.5))}
+.btn-empty{
+  background:linear-gradient(135deg,rgba(16,185,129,.5),rgba(5,150,105,.5));
+  border-color:rgba(16,185,129,.2);
+}
 
 /* ========== 弹窗 ========== */
-.overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.55);display:flex;justify-content:center;align-items:center;z-index:200;animation:fadeIn .2s;backdrop-filter:blur(6px)}
+.overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.6);display:flex;justify-content:center;align-items:center;z-index:200;animation:fadeIn .2s;backdrop-filter:blur(8px)}
 @keyframes fadeIn{from{opacity:0}to{opacity:1}}
-.card{background:rgba(30,25,50,.95);border-radius:24px;padding:24px 20px;text-align:center;max-width:340px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,.4);border:1px solid rgba(255,255,255,.1);animation:slideUp .4s cubic-bezier(.4,0,.2,1);color:#fff}
+.card{background:rgba(24,20,44,.96);border-radius:28px;padding:28px 22px;text-align:center;max-width:340px;width:90%;box-shadow:0 24px 64px rgba(0,0,0,.5),0 0 60px rgba(139,92,246,.06);border:1px solid rgba(255,255,255,.08);animation:slideUp .4s cubic-bezier(.4,0,.2,1);color:#fff}
 @keyframes slideUp{from{transform:translateY(30px);opacity:0}to{transform:translateY(0);opacity:1}}
 .win-title{font-size:28px;color:#c4a6ff;margin-bottom:4px;font-weight:800}
 .win-subtitle{font-size:13px;color:rgba(255,255,255,.6);margin-bottom:8px}
-.win-stars{font-size:40px;margin-bottom:12px;line-height:1}
-.win-buttons{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+.win-stars{font-size:44px;margin-bottom:12px;line-height:1}
+.win-buttons{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
 
 .pwd-input{width:100%;padding:10px 14px;border-radius:12px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.08);color:#fff;font-size:15px;text-align:center;font-family:inherit;outline:none;margin:10px 0}
 .pwd-input:focus{border-color:#a78bfa;box-shadow:0 0 0 3px rgba(167,139,250,.2)}
 .pwd-error{color:#ff6b6b;font-size:12px;margin-top:3px;display:none}
 
 /* ========== 教程 ========== */
-.tutorial-card{background:rgba(30,25,50,.95);border-radius:24px;padding:0 0 20px 0;text-align:center;max-width:360px;width:92%;box-shadow:0 20px 60px rgba(0,0,0,.4);border:1px solid rgba(255,255,255,.1);overflow:hidden;animation:slideUp .4s cubic-bezier(.4,0,.2,1);color:#fff}
+.tutorial-card{background:rgba(24,20,44,.96);border-radius:28px;padding:0 0 24px 0;text-align:center;max-width:380px;width:92%;box-shadow:0 24px 64px rgba(0,0,0,.5);border:1px solid rgba(255,255,255,.08);overflow:hidden;animation:slideUp .4s cubic-bezier(.4,0,.2,1);color:#fff}
 .tutorial-header{background:linear-gradient(135deg,rgba(167,139,250,.8),rgba(124,92,252,.8));padding:20px 18px 16px;position:relative}
 .tutorial-skip{position:absolute;top:8px;right:12px;background:rgba(255,255,255,.15);color:#fff;border:none;padding:3px 10px;border-radius:10px;font-size:11px;cursor:pointer;font-family:inherit}
 .tutorial-icon{font-size:40px;margin-bottom:4px}
@@ -236,7 +385,7 @@ canvas#bgCanvas{position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;poi
 .tutorial-step-title{font-size:13px;font-weight:600;opacity:.85}
 .tutorial-body{padding:16px 16px 0}
 .tutorial-demo{display:flex;justify-content:center;align-items:center;gap:12px;padding:8px 0;min-height:90px}
-.demo-bottle{width:40px;height:75px;background:rgba(255,255,255,.05);border:1.5px solid rgba(255,255,255,.15);border-radius:5px 5px 14px 14px;overflow:hidden;display:flex;flex-direction:column-reverse}
+.demo-bottle{width:32px;height:58px;background:rgba(255,255,255,.05);border:1.5px solid rgba(255,255,255,.15);border-radius:5px 5px 14px 14px;overflow:hidden;display:flex;flex-direction:column-reverse}
 .demo-bottle.highlight{border-color:#a78bfa;box-shadow:0 0 10px rgba(167,139,250,.3)}
 .tutorial-text{font-size:14px;color:rgba(255,255,255,.85);line-height:1.6;margin:0 0 12px}
 .tutorial-dots{display:flex;gap:5px;justify-content:center;margin-bottom:14px}
@@ -244,10 +393,12 @@ canvas#bgCanvas{position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;poi
 .tutorial-dot.active{background:#a78bfa;width:18px;border-radius:4px}
 
 /* ========== 关卡选择 ========== */
-.level-select-card{background:rgba(30,25,50,.95);border-radius:20px;padding:20px 16px;max-width:400px;width:92%;max-height:80vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.4);border:1px solid rgba(255,255,255,.1);color:#fff}
+.level-select-card{background:rgba(24,20,44,.96);border-radius:24px;padding:24px 16px;max-width:420px;width:92%;max-height:80vh;overflow-y:auto;box-shadow:0 24px 64px rgba(0,0,0,.5);border:1px solid rgba(255,255,255,.08);color:#fff}
 .level-select-title{font-size:18px;font-weight:800;text-align:center;margin-bottom:14px}
-.level-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
-.level-btn{width:100%;aspect-ratio:1;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;transition:all .2s;font-family:inherit;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px}
+.level-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:5px}
+.level-btn{width:100%;aspect-ratio:1;border:none;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;transition:all .2s;font-family:inherit;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;padding:2px}
+.level-btn .lvl-name{font-size:9px;opacity:.7;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:90%}
+.level-btn .lvl-stars{font-size:10px;line-height:1}
 .level-btn.unlocked{background:rgba(167,139,250,.2);color:#c4a6ff}
 .level-btn.unlocked:active{background:rgba(167,139,250,.4);transform:scale(0.92)}
 .level-btn.locked{background:rgba(255,255,255,.05);color:rgba(255,255,255,.2);cursor:not-allowed}
@@ -263,47 +414,35 @@ canvas#bgCanvas{position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;poi
 .confetti-piece{position:absolute;animation:confettiDrop linear forwards}
 @keyframes confettiDrop{0%{transform:translateY(-60px) rotate(0deg) scale(1);opacity:1}70%{opacity:1}100%{transform:translateY(105vh) rotate(720deg) scale(.4);opacity:0}}
 
-/* ========== 音效开关 ========== */
-.sound-toggle{
-  position:fixed;top:12px;right:12px;z-index:400;
-  width:36px;height:36px;border-radius:50%;
-  background:rgba(255,255,255,.1);backdrop-filter:blur(8px);
-  border:1px solid rgba(255,255,255,.15);
-  color:#fff;font-size:16px;cursor:pointer;
-  display:flex;align-items:center;justify-content:center;
-  transition:all .2s;
-}
-.sound-toggle:active{transform:scale(.9)}
-.sound-toggle.muted{opacity:.5}
-
 /* ========== iPhone 14 Pro Max (390-440px) ========== */
 @media(min-width:390px) and (max-width:440px){
-  :root{--bottle-w:56px;--bottle-h:128px;--neck-w:28px;--neck-h:18px;--pig-size:40px}
+  :root{--bottle-w:44px;--bottle-h:100px;--neck-w:22px;--neck-h:14px;--pig-size:32px}
   .btn{padding:10px 16px;font-size:13px}
   .top-bar{padding:8px 14px}.level-info{font-size:20px}
 }
 
 /* ========== iPad (≥700px) ========== */
 @media(min-width:700px){
-  :root{--bottle-w:72px;--bottle-h:170px;--neck-w:36px;--neck-h:22px;--pig-size:54px}
+  :root{--bottle-w:56px;--bottle-h:130px;--neck-w:28px;--neck-h:18px;--pig-size:44px}
   .game-container{max-width:700px;padding:20px 16px}
   .bottles-area{min-height:500px}
-  .btn{padding:14px 24px;font-size:15px;border-radius:24px}
-  .top-bar{padding:12px 20px;border-radius:24px;margin-bottom:10px}
+  .btn{padding:14px 26px;font-size:15px;border-radius:24px}
+  .top-bar{padding:12px 20px;border-radius:28px;margin-bottom:10px}
   .level-info{font-size:24px}.level-info .lv{font-size:16px}
   .move-info{font-size:15px;padding:8px 18px}.move-info span{font-size:24px}
   .star{font-size:22px}.star-row{padding:6px 12px}
+  .sound-inline-btn{width:36px;height:36px;font-size:16px}
   .pig-row{gap:12px;padding:10px;min-height:76px}
   .level-hint{font-size:14px;margin-bottom:6px}
   .controls{gap:12px;padding:14px 0 6px}
   .bottle-label{font-size:12px}
-  .card{max-width:440px;padding:36px 28px}
-  .win-title{font-size:36px}.win-stars{font-size:52px}
-  .tutorial-card{max-width:440px}.tutorial-title{font-size:26px}
+  .card{max-width:460px;padding:40px 32px}
+  .win-title{font-size:38px}.win-stars{font-size:56px}
+  .tutorial-card{max-width:460px}.tutorial-title{font-size:28px}
 }
 
 @media(max-width:360px){
-  :root{--bottle-w:44px;--bottle-h:100px;--neck-w:22px;--neck-h:13px;--pig-size:30px}
+  :root{--bottle-w:34px;--bottle-h:78px;--neck-w:18px;--neck-h:10px;--pig-size:26px}
   .btn{padding:7px 10px;font-size:11px}.controls{gap:4px}
 }
 </style>
@@ -312,13 +451,15 @@ canvas#bgCanvas{position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;poi
 
 <canvas id="bgCanvas"></canvas>
 
-<button class="sound-toggle" id="soundToggle" onclick="toggleSound()" title="音效">🔊</button>
-
 <div class="game-container">
   <div class="top-bar">
     <div class="level-info"><span class="lv">第</span><span id="levelNum">1</span><span class="lv">关</span></div>
     <div class="star-row" id="starRow">
       <span class="star">⭐</span><span class="star">⭐</span><span class="star">⭐</span>
+    </div>
+    <div class="sound-inline">
+      <button class="sound-inline-btn" id="bgmBtn" onclick="toggleVolPopup('bgm',this)" title="背景音乐音量">🎵</button>
+      <button class="sound-inline-btn" id="pourBtn" onclick="toggleVolPopup('pour',this)" title="倒水音效音量">💧</button>
     </div>
     <div class="move-info">步数 <span id="moveCount">0</span></div>
   </div>
@@ -328,7 +469,6 @@ canvas#bgCanvas{position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;poi
   <div class="controls">
     <button class="btn" onclick="undo()">↩ 撤销</button>
     <button class="btn" onclick="resetLevel()">🔄 重置</button>
-    <button class="btn btn-warn" onclick="showHint()">💡 提示</button>
     <button class="btn btn-empty" onclick="showEmptyBottleModal()">🧴 空瓶</button>
     <button class="btn btn-accent" onclick="showLevelSelect()">📋 选关</button>
   </div>
@@ -385,80 +525,240 @@ canvas#bgCanvas{position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;poi
 
 <div class="fx-layer" id="fxLayer"></div>
 
+<!-- 音量控制弹窗 (position:fixed, body级别) -->
+<div class="vol-popup" id="bgmVolPopup">
+  <div class="vol-popup-label">🎵 背景音乐</div>
+  <div class="vol-slider-wrap">
+    <input type="range" class="vol-slider" id="bgmSlider" min="0" max="100" value="35" oninput="setBgmVolume(this.value)">
+    <span class="vol-popup-value" id="bgmVolVal">35%</span>
+  </div>
+</div>
+<div class="vol-popup" id="pourVolPopup">
+  <div class="vol-popup-label">💧 倒水音效</div>
+  <div class="vol-slider-wrap">
+    <input type="range" class="vol-slider" id="pourSlider" min="0" max="100" value="80" oninput="setPourVolume(this.value)">
+    <span class="vol-popup-value" id="pourVolVal">80%</span>
+  </div>
+</div>
+
 <script>
-// ==================== 音效系统 (Web Audio API) ====================
-let audioCtx=null,soundEnabled=true;
+// ==================== 音效系统 ====================
+let audioCtx=null;
+
+// 音量状态 (0-100)
+let pourVolume=80, bgmVolume=35;
+let pourEnabled=true, bgmEnabled=true;
+
+// 持久化 Audio 元素（预加载）
+let pourAudio=null, bgmAudio=null;
+
 function initAudio(){
   if(!audioCtx)audioCtx=new(window.AudioContext||window.webkitAudioContext)();
 }
-
-function makeNoiseBuffer(){
-  if(!audioCtx)return null;
-  const len=audioCtx.sampleRate*.4;
-  const buf=audioCtx.createBuffer(1,len,audioCtx.sampleRate);
-  const data=buf.getChannelData(0);
-  for(let i=0;i<len;i++)data[i]=Math.random()*2-1;
-  return buf;
+function resumeAudio(){
+  initAudio();
+  if(audioCtx.state==='suspended')audioCtx.resume();
 }
 
+// ===== 倒水音效 (persistent + 预加载) =====
+function loadPourSound(){
+  try{
+    pourAudio=new Audio('sounds/pour.mp3');
+    pourAudio.preload='auto';
+    pourAudio.volume=pourVolume/100;
+    // 触预加载
+    pourAudio.load();
+  }catch(e){}
+}
 function playPourSound(){
-  if(!soundEnabled||!audioCtx)return;
-  const t=audioCtx.currentTime;
-  // 白噪声咕噜水声
-  const buf=makeNoiseBuffer();if(!buf)return;
-  const src=audioCtx.createBufferSource();src.buffer=buf;
-  const filter=audioCtx.createBiquadFilter();
-  filter.type='lowpass';
-  filter.frequency.setValueAtTime(600,t);
-  filter.frequency.linearRampToValueAtTime(350,t+.55);
-  const g=audioCtx.createGain();
-  g.gain.setValueAtTime(.16,t);
-  g.gain.setValueAtTime(.16,t+.45);
-  g.gain.linearRampToValueAtTime(0,t+.55);
-  src.connect(filter);filter.connect(g);g.connect(audioCtx.destination);
-  src.start(t);src.stop(t+.55);
-}
-function playDropSound(){
-  if(!soundEnabled||!audioCtx)return;
-  const t=audioCtx.currentTime;
-  const o=audioCtx.createOscillator(),g=audioCtx.createGain();
-  o.type='sine';o.frequency.setValueAtTime(520,t);
-  o.frequency.exponentialRampToValueAtTime(180,t+.12);
-  g.gain.setValueAtTime(.1,t);g.gain.linearRampToValueAtTime(0,t+.14);
-  o.connect(g);g.connect(audioCtx.destination);
-  o.start(t);o.stop(t+.14);
-}
-function playBottleCompleteSound(){
-  if(!soundEnabled||!audioCtx)return;
-  const t=audioCtx.currentTime;
-  [523,659,784,1047].forEach((freq,i)=>{
-    const o=audioCtx.createOscillator(),g=audioCtx.createGain();
-    o.type='sine';o.frequency.value=freq;
-    g.gain.setValueAtTime(.1,t+i*.1);
-    g.gain.linearRampToValueAtTime(0,t+i*.1+.2);
-    o.connect(g);g.connect(audioCtx.destination);
-    o.start(t+i*.1);o.stop(t+i*.1+.2);
+  if(!pourEnabled||!pourAudio)return;
+  pourAudio.volume=pourVolume/100;
+  pourAudio.currentTime=0;
+  pourAudio.play().catch(()=>{
+    // 如果失败了就重新加载再试一次
+    pourAudio.load();
+    setTimeout(()=>{pourAudio.currentTime=0;pourAudio.play().catch(()=>{})},50);
   });
 }
-function playWinSound(){
-  if(!soundEnabled||!audioCtx)return;
+
+// ===== 倒水音效音量控制 =====
+function setPourVolume(val){
+  pourVolume=parseInt(val);
+  document.getElementById('pourVolVal').textContent=val+'%';
+  if(pourAudio)pourAudio.volume=val/100;
+  // 0 时静音，>0 时启用
+  pourEnabled=val>0;
+  updateSoundBtnState('pour');
+}
+function updateSoundBtnState(type){
+  if(type==='pour'){
+    const btn=document.getElementById('pourBtn');
+    btn.classList.toggle('muted',!pourEnabled);
+  }else{
+    const btn=document.getElementById('bgmBtn');
+    btn.classList.toggle('muted',!bgmEnabled);
+  }
+}
+
+// ===== 水滴声 (Web Audio) =====
+function playDropSound(){
+  if(!pourEnabled||!audioCtx)return;
+  const vol=pourVolume/100;
   const t=audioCtx.currentTime;
-  const notes=[523,659,784,659,784,1047];
+  const o=audioCtx.createOscillator(),g=audioCtx.createGain();
+  o.type='sine';o.frequency.setValueAtTime(720,t);
+  o.frequency.exponentialRampToValueAtTime(200,t+.09);
+  g.gain.setValueAtTime(.15*vol,t);g.gain.linearRampToValueAtTime(0,t+.11);
+  o.connect(g);g.connect(audioCtx.destination);
+  o.start(t);o.stop(t+.11);
+  const o2=audioCtx.createOscillator(),g2=audioCtx.createGain();
+  o2.type='triangle';o2.frequency.value=720*1.5;
+  g2.gain.setValueAtTime(.07*vol,t);g2.gain.linearRampToValueAtTime(0,t+.07);
+  o2.connect(g2);g2.connect(audioCtx.destination);
+  o2.start(t);o2.stop(t+.07);
+}
+
+// ===== 瓶子装满音效 =====
+function playBottleCompleteSound(){
+  if(!pourEnabled||!audioCtx)return;
+  const vol=pourVolume/100;
+  const t=audioCtx.currentTime;
+  const notes=[523,659,784,1047];
   notes.forEach((freq,i)=>{
     const o=audioCtx.createOscillator(),g=audioCtx.createGain();
     o.type='triangle';o.frequency.value=freq;
-    g.gain.setValueAtTime(.12,t+i*.12);
-    g.gain.linearRampToValueAtTime(0,t+i*.12+.25);
-    o.connect(g);g.connect(audioCtx.destination);
-    o.start(t+i*.12);o.stop(t+i*.12+.25);
+    g.gain.setValueAtTime(.1*vol,t+i*.1);g.gain.linearRampToValueAtTime(0,t+i*.1+.3);
+    o.connect(g);g.connect(audioCtx.destination);o.start(t+i*.1);o.stop(t+i*.1+.3);
+    const o2=audioCtx.createOscillator(),g2=audioCtx.createGain();
+    o2.type='sine';o2.frequency.value=freq*2;
+    g2.gain.setValueAtTime(.04*vol,t+i*.1+.05);g2.gain.linearRampToValueAtTime(0,t+i*.1+.25);
+    o2.connect(g2);g2.connect(audioCtx.destination);o2.start(t+i*.1+.05);o2.stop(t+i*.1+.25);
   });
+  const bo=audioCtx.createOscillator(),bg=audioCtx.createGain();
+  bo.type='sine';bo.frequency.value=1047;
+  bg.gain.setValueAtTime(.06*vol,t+.5);bg.gain.linearRampToValueAtTime(0,t+.8);
+  bo.connect(bg);bg.connect(audioCtx.destination);bo.start(t+.5);bo.stop(t+.8);
 }
-function toggleSound(){
-  initAudio();
-  soundEnabled=!soundEnabled;
-  document.getElementById('soundToggle').textContent=soundEnabled?'🔊':'🔇';
-  document.getElementById('soundToggle').classList.toggle('muted',!soundEnabled);
+
+// ===== 通关庆祝 =====
+function playWinSound(){
+  if(!pourEnabled||!audioCtx)return;
+  const vol=pourVolume/100;
+  const t=audioCtx.currentTime;
+  const melody=[523,659,784,659,784,1047,784,1318];
+  melody.forEach((freq,i)=>{
+    const o=audioCtx.createOscillator(),g=audioCtx.createGain();
+    o.type='triangle';o.frequency.value=freq;
+    g.gain.setValueAtTime(.1*vol,t+i*.1);g.gain.linearRampToValueAtTime(0,t+i*.1+.28);
+    o.connect(g);g.connect(audioCtx.destination);o.start(t+i*.1);o.stop(t+i*.1+.28);
+    const o2=audioCtx.createOscillator(),g2=audioCtx.createGain();
+    o2.type='sine';o2.frequency.value=freq*1.5;
+    g2.gain.setValueAtTime(.04*vol,t+i*.1+.03);g2.gain.linearRampToValueAtTime(0,t+i*.1+.22);
+    o2.connect(g2);g2.connect(audioCtx.destination);o2.start(t+i*.1+.03);o2.stop(t+i*.1+.22);
+  });
+  setTimeout(()=>{
+    if(!pourEnabled||!audioCtx)return;
+    const co=audioCtx.createOscillator(),cg=audioCtx.createGain();
+    co.type='sine';co.frequency.value=1047;
+    cg.gain.setValueAtTime(.12*vol,audioCtx.currentTime);
+    cg.gain.linearRampToValueAtTime(0,audioCtx.currentTime+.6);
+    co.connect(cg);cg.connect(audioCtx.destination);
+    co.start();co.stop(audioCtx.currentTime+.6);
+  },900);
 }
+
+// ===== 背景音乐 (持久化 HTML5 Audio 循环播放) =====
+function loadBgm(){
+  try{
+    bgmAudio=new Audio('sounds/bgm.mp3');
+    bgmAudio.loop=true;
+    bgmAudio.volume=bgmVolume/100;
+    bgmAudio.preload='auto';
+    bgmAudio.load();
+  }catch(e){}
+}
+function setBgmVolume(val){
+  bgmVolume=parseInt(val);
+  document.getElementById('bgmVolVal').textContent=val+'%';
+  if(bgmAudio)bgmAudio.volume=val/100;
+  bgmEnabled=val>0;
+  updateSoundBtnState('bgm');
+  if(bgmEnabled){startBgm();}else{if(bgmAudio)bgmAudio.pause();}
+}
+function startBgm(){
+  if(bgmAudio&&bgmEnabled){
+    bgmAudio.volume=bgmVolume/100;
+    bgmAudio.play().catch(()=>{
+      // 如果播放失败，在用户下次点击时重试
+      setTimeout(()=>{if(bgmEnabled)bgmAudio.play().catch(()=>{})},200);
+    });
+  }
+}
+function stopBgm(){
+  if(bgmAudio){bgmAudio.pause();}
+}
+
+// ===== 音量弹窗控制 (position:fixed, 动态定位) =====
+let activePopup=null;
+function toggleVolPopup(type,btnEl){
+  resumeAudio();
+  const popup=document.getElementById(type+'VolPopup');
+  const isOpen=popup.classList.contains('show');
+
+  // 关闭所有弹窗
+  document.querySelectorAll('.vol-popup').forEach(p=>p.classList.remove('show'));
+
+  if(!isOpen){
+    // 同步滑块值
+    const slider=document.getElementById(type+'Slider');
+    if(type==='pour')slider.value=pourVolume;
+    else slider.value=bgmVolume;
+
+    // 动态定位：弹窗显示在按钮下方
+    const btnRect=btnEl.getBoundingClientRect();
+    const popupW=140; // 预估弹窗宽度
+    let left=btnRect.left+btnRect.width/2-popupW/2;
+    let top=btnRect.bottom+8;
+
+    // 边界检测
+    if(left<8)left=8;
+    if(left+popupW>window.innerWidth-8)left=window.innerWidth-popupW-8;
+    if(top+120>window.innerHeight)top=btnRect.top-130; // 空间不够就放上面
+
+    popup.style.left=left+'px';
+    popup.style.top=top+'px';
+    popup.classList.add('show');
+    activePopup=type;
+
+    // 如果是背景音乐，触发起播
+    if(type==='bgm')startBgm();
+  }else{
+    activePopup=null;
+  }
+}
+
+// 点击其他地方关闭弹窗(排除弹窗和按钮自身)
+document.addEventListener('click',function(e){
+  if(activePopup){
+    const clickedOnPopup=e.target.closest('.vol-popup');
+    const clickedOnBtn=e.target.closest('.sound-inline-btn');
+    if(!clickedOnPopup&&!clickedOnBtn){
+      document.querySelectorAll('.vol-popup').forEach(p=>p.classList.remove('show'));
+      activePopup=null;
+    }
+  }
+});
+// 触摸事件也处理(移动端)
+document.addEventListener('touchstart',function(e){
+  if(activePopup){
+    const clickedOnPopup=e.target.closest('.vol-popup');
+    const clickedOnBtn=e.target.closest('.sound-inline-btn');
+    if(!clickedOnPopup&&!clickedOnBtn){
+      document.querySelectorAll('.vol-popup').forEach(p=>p.classList.remove('show'));
+      activePopup=null;
+    }
+  }
+},{passive:true});
 
 // ==================== 颜色配置 ====================
 const COLORS = [
@@ -473,21 +773,78 @@ const COLORS = [
 ];
 
 const LEVEL_CONFIGS = [
-  {colors:2,layers:2,empty:1,name:'入门'},{colors:3,layers:2,empty:1,name:'简单'},
-  {colors:3,layers:3,empty:1,name:'热身'},{colors:4,layers:3,empty:1,name:'进阶'},
-  {colors:4,layers:4,empty:1,name:'思考'},{colors:5,layers:4,empty:1,name:'挑战'},
-  {colors:5,layers:4,empty:1,name:'脑力'},{colors:6,layers:4,empty:1,name:'烧脑'},
-  {colors:6,layers:5,empty:1,name:'大师'},{colors:7,layers:5,empty:1,name:'专家'},
-  {colors:7,layers:5,empty:1,name:'传说'},{colors:8,layers:5,empty:1,name:'地狱'},
-  {colors:8,layers:5,empty:2,name:'噩梦'},{colors:8,layers:6,empty:2,name:'深渊'},
-  {colors:8,layers:6,empty:2,name:'天堂'},
+  // 1-5: 入门 (2色2层)
+  {colors:2,layers:2,empty:1,name:'初见'},{colors:2,layers:2,empty:1,name:'尝试'},
+  {colors:2,layers:2,empty:1,name:'小试'},{colors:2,layers:2,empty:2,name:'轻松'},
+  {colors:2,layers:2,empty:2,name:'开窍'},
+  // 6-10: 基础 (3色2层)
+  {colors:3,layers:2,empty:1,name:'三色'},{colors:3,layers:2,empty:1,name:'起步'},
+  {colors:3,layers:2,empty:2,name:'分拣'},{colors:3,layers:2,empty:2,name:'顺序'},
+  {colors:3,layers:2,empty:2,name:'理顺'},
+  // 11-15: 热身 (3色3层)
+  {colors:3,layers:3,empty:1,name:'叠加'},{colors:3,layers:3,empty:2,name:'堆积'},
+  {colors:3,layers:3,empty:2,name:'混合'},{colors:3,layers:3,empty:2,name:'分离'},
+  {colors:3,layers:3,empty:2,name:'清澈'},
+  // 16-22: 进阶 (4色3层)
+  {colors:4,layers:3,empty:1,name:'四色'},{colors:4,layers:3,empty:2,name:'调配'},
+  {colors:4,layers:3,empty:2,name:'试炼'},{colors:4,layers:3,empty:2,name:'交叉'},
+  {colors:4,layers:3,empty:2,name:'规划'},{colors:4,layers:3,empty:2,name:'耐心'},
+  {colors:4,layers:3,empty:2,name:'洞察'},
+  // 23-30: 思考 (4色4层)
+  {colors:4,layers:4,empty:1,name:'深度'},{colors:4,layers:4,empty:2,name:'沉稳'},
+  {colors:4,layers:4,empty:2,name:'专注'},{colors:4,layers:4,empty:2,name:'沉静'},
+  {colors:4,layers:4,empty:2,name:'明辨'},{colors:4,layers:4,empty:2,name:'推理'},
+  {colors:4,layers:4,empty:2,name:'策略'},{colors:4,layers:4,empty:2,name:'思辨'},
+  // 31-40: 挑战 (5色4层)
+  {colors:5,layers:4,empty:1,name:'五色'},{colors:5,layers:4,empty:2,name:'彩虹'},
+  {colors:5,layers:4,empty:2,name:'斑斓'},{colors:5,layers:4,empty:2,name:'交错'},
+  {colors:5,layers:4,empty:2,name:'甄别'},{colors:5,layers:4,empty:2,name:'归纳'},
+  {colors:5,layers:4,empty:2,name:'统筹'},{colors:5,layers:4,empty:2,name:'巧妙'},
+  {colors:5,layers:4,empty:2,name:'谨慎'},{colors:5,layers:4,empty:2,name:'斟酌'},
+  // 41-50: 脑力 (5色5层)
+  {colors:5,layers:5,empty:1,name:'深池'},{colors:5,layers:5,empty:2,name:'迷幻'},
+  {colors:5,layers:5,empty:2,name:'复杂'},{colors:5,layers:5,empty:2,name:'迷宫'},
+  {colors:5,layers:5,empty:2,name:'多虑'},{colors:5,layers:5,empty:2,name:'周密'},
+  {colors:5,layers:5,empty:2,name:'审慎'},{colors:5,layers:5,empty:2,name:'细密'},
+  {colors:5,layers:5,empty:2,name:'布局'},{colors:5,layers:5,empty:2,name:'运筹'},
+  // 51-60: 烧脑 (6色5层)
+  {colors:6,layers:5,empty:1,name:'六色'},{colors:6,layers:5,empty:2,name:'眼花'},
+  {colors:6,layers:5,empty:2,name:'缭乱'},{colors:6,layers:5,empty:2,name:'繁复'},
+  {colors:6,layers:5,empty:2,name:'细究'},{colors:6,layers:5,empty:2,name:'精算'},
+  {colors:6,layers:5,empty:2,name:'推演'},{colors:6,layers:5,empty:2,name:'深算'},
+  {colors:6,layers:5,empty:2,name:'哲思'},{colors:6,layers:5,empty:2,name:'洞察'},
+  // 61-70: 大师 (6色5层+1空)
+  {colors:6,layers:5,empty:2,name:'极限'},{colors:6,layers:5,empty:2,name:'熔炉'},
+  {colors:6,layers:5,empty:2,name:'千丝'},{colors:6,layers:5,empty:2,name:'万缕'},
+  {colors:6,layers:5,empty:2,name:'纠缠'},{colors:6,layers:5,empty:2,name:'解谜'},
+  {colors:6,layers:5,empty:2,name:'抽象'},{colors:6,layers:5,empty:2,name:'纯粹'},
+  {colors:6,layers:5,empty:2,name:'痴迷'},{colors:6,layers:5,empty:2,name:'狂热'},
+  // 71-80: 专家 (7色5层)
+  {colors:7,layers:5,empty:1,name:'七彩'},{colors:7,layers:5,empty:2,name:'虹光'},
+  {colors:7,layers:5,empty:2,name:'混乱'},{colors:7,layers:5,empty:2,name:'混沌'},
+  {colors:7,layers:5,empty:2,name:'秩序'},{colors:7,layers:5,empty:2,name:'极致'},
+  {colors:7,layers:5,empty:2,name:'巅峰'},{colors:7,layers:5,empty:2,name:'闪耀'},
+  {colors:7,layers:5,empty:2,name:'璀璨'},{colors:7,layers:5,empty:2,name:'绚烂'},
+  // 81-90: 传说 (7色6层)
+  {colors:7,layers:6,empty:1,name:'深渊'},{colors:7,layers:6,empty:2,name:'无底'},
+  {colors:7,layers:6,empty:2,name:'厚重'},{colors:7,layers:6,empty:2,name:'无垠'},
+  {colors:7,layers:6,empty:2,name:'浩瀚'},{colors:7,layers:6,empty:2,name:'史诗'},
+  {colors:7,layers:6,empty:2,name:'传奇'},{colors:7,layers:6,empty:2,name:'不朽'},
+  {colors:7,layers:6,empty:2,name:'神圣'},{colors:7,layers:6,empty:2,name:'永恒'},
+  // 91-100: 神话 (8色6层)
+  {colors:8,layers:6,empty:1,name:'八色'},{colors:8,layers:6,empty:2,name:'神域'},
+  {colors:8,layers:6,empty:2,name:'梦魇'},{colors:8,layers:6,empty:2,name:'无尽'},
+  {colors:8,layers:6,empty:2,name:'涅槃'},{colors:8,layers:6,empty:2,name:'共鸣'},
+  {colors:8,layers:6,empty:2,name:'圆满'},{colors:8,layers:6,empty:2,name:'归一'},
+  {colors:8,layers:6,empty:2,name:'彼岸'},{colors:8,layers:7,empty:2,name:'封神'},
 ];
 const TOTAL_LEVELS=LEVEL_CONFIGS.length;
 
 // ==================== 游戏状态 ====================
 let bottles=[],selectedBottle=-1,moves=0,currentLevel=1,maxLayers=4;
 let history=[],levelStars={},isAnimating=false,tutorialShown=false;
-let bottlePositions=[],completedColors=new Set(),gonePigColors=new Set();
+let bottlePositions=[],completedColors=new Set(),gonePigColors=new Set(),leavingPigColors=new Set();
+let levelOptimalMoves=-1; // BFS精确最优步数
 
 function loadProgress(){
   try{
@@ -509,7 +866,7 @@ function initBackground(){
   let W,H,particles=[];
   function resize(){W=c.width=window.innerWidth;H=c.height=window.innerHeight}
   resize();window.addEventListener('resize',resize);
-  const cols=['#a78bfa','#7c5cfc','#ff6b9d','#3ddc84','#4da6ff','#ffc940','#ff8c3a','#2dd4bf'];
+  const cols=COLORS.map(c=>c.glow);
   for(let i=0;i<55;i++){
     particles.push({x:Math.random()*W,y:Math.random()*H,r:2+Math.random()*7,vx:(Math.random()-.5)*.25,vy:-(.15+Math.random()*.4),c:cols[Math.floor(Math.random()*cols.length)],alpha:.06+Math.random()*.12});
   }
@@ -542,19 +899,22 @@ function generateLevel(lv){
     }
     const isSorted=state.every(b=>!b.length||(b.length===maxLayers&&b.every(c=>c===b[0])));
     if(isSorted)continue;
-    if(checkSolvable(state,cfg.colors,maxLayers))return state;
+    if(solveMinMoves(state,maxLayers,50000)>=0)return state;
   }
   const fb=[];for(let c=0;c<cfg.colors;c++)fb.push(new Array(cfg.layers).fill(c));
   for(let e=0;e<cfg.empty;e++)fb.push([]);return fb;
 }
 
-function checkSolvable(startState,numColors,layers){
-  const totalBottles=startState.length,MAX_NODES=80000,MAX_DEPTH=120;
+function getWinKey(state,layers){
+  return state.map(b=>{if(!b.length)return'0';return b.length===layers&&b.every(c=>c===b[0])?String(b[0])+b.length:'x'}).join(',');
+}
+function solveMinMoves(startState,layers,maxNodes=100000){
+  const totalBottles=startState.length,MAX_DEPTH=160;
   const visited=new Set(),queue=[{s:startState.map(b=>[...b]),d:0}];
   visited.add(JSON.stringify(startState));
-  while(queue.length>0&&visited.size<MAX_NODES){
+  while(queue.length>0&&visited.size<maxNodes){
     const{s,d}=queue.shift();
-    if(s.every(b=>!b.length||(b.length===layers&&b.every(c=>c===b[0]))))return true;
+    if(s.every(b=>!b.length||(b.length===layers&&b.every(c=>c===b[0]))))return d;
     if(d>=MAX_DEPTH)continue;
     for(let f=0;f<totalBottles;f++){
       if(!s[f].length)continue;const tc=s[f][s[f].length-1];
@@ -566,7 +926,7 @@ function checkSolvable(startState,numColors,layers){
       }
     }
   }
-  return false;
+  return -1; // 未找到解
 }
 
 // ==================== 倒水逻辑 ====================
@@ -592,7 +952,7 @@ function calcBottlePositions(count){
   const area=document.getElementById('bottlesArea');
   const aw=area.clientWidth,ah=area.clientHeight;
   const isPad=window.innerWidth>=700;
-  const bw=isPad?88:66,bh=isPad?210:158,pad=isPad?16:10;
+  const bw=isPad?70:52,bh=isPad?165:120,pad=isPad?14:8;
   const positions=[];
   if(count<=6){
     const perRow=Math.ceil(count/2);
@@ -600,8 +960,8 @@ function calcBottlePositions(count){
       const row=Math.floor(i/perRow),col=i%perRow;
       const totalInRow=row===0?perRow:(count-perRow);
       const startX=(aw-totalInRow*bw)/2;
-      const x=startX+col*bw+(Math.random()-.5)*18;
-      const y=20+row*(bh+pad)+(Math.random()-.5)*16;
+      const x=startX+col*bw+(Math.random()-.5)*14;
+      const y=16+row*(bh+pad)+(Math.random()-.5)*12;
       positions.push({x:Math.max(4,Math.min(aw-bw,x)),y:Math.max(4,Math.min(ah-bh,y))});
     }
   }else{
@@ -610,8 +970,8 @@ function calcBottlePositions(count){
       const row=Math.floor(i/5),col=i%5;
       const colsInRow=Math.min(5,count-row*5);
       const startX=(aw-colsInRow*bw)/2;
-      const x=startX+col*bw+(Math.random()-.3)*20;
-      const y=8+row*(bh+pad-4)+(Math.random()-.4)*14;
+      const x=startX+col*bw+(Math.random()-.3)*16;
+      const y=8+row*(bh+pad-4)+(Math.random()-.4)*12;
       positions.push({x:Math.max(4,Math.min(aw-bw,x)),y:Math.max(4,Math.min(ah-bh,y))});
     }
   }
@@ -630,48 +990,76 @@ function renderPigRow(){
   const cfg=LEVEL_CONFIGS[currentLevel-1];
   const row=document.getElementById('pigRow');
 
-  // 先捕获即将离开的猪猪位置（旧DOM还存在）
-  const pigsToAnimate=[];
+  // 找出新完成的猪猪 → 启动离开动画（先从DOM保留，特效播完再删）
   for(let c=0;c<cfg.colors;c++){
-    if(completedColors.has(c)&&!gonePigColors.has(c)){
-      gonePigColors.add(c);
+    if(completedColors.has(c)&&!gonePigColors.has(c)&&!leavingPigColors.has(c)){
+      leavingPigColors.add(c);
+      playBottleCompleteSound();
       const oldEl=document.getElementById('pig'+c);
       if(oldEl){
         const r=oldEl.getBoundingClientRect();
-        pigsToAnimate.push({color:c,cx:r.left+r.width/2,cy:r.top+r.height/2});
+        animatePigLeave(c,r.left+r.width/2,r.top+r.height/2);
       }
+      // 特效播完后，加消失动画，再统一从 DOM 移除
+      setTimeout(()=>{
+        const el=document.getElementById('pig'+c);
+        if(el){el.classList.add('gone');el.classList.remove('leaving','happy')}
+        setTimeout(()=>{
+          leavingPigColors.delete(c);
+          gonePigColors.add(c);
+          render();
+        },550);
+      },1700);
     }
   }
 
-  // 重建DOM（已离开的跳过）
+  // 构建 DOM：已消失的跳过，离开中的保留显示
   let html='';
   for(let c=0;c<cfg.colors;c++){
     if(gonePigColors.has(c))continue;
-    const color=COLORS[c],justDone=completedColors.has(c);
-    html+=`<div class="pig-char${justDone?' happy':''}" data-pig-color="${c}" id="pig${c}">
+    const color=COLORS[c];
+    const isLeaving=leavingPigColors.has(c);
+    const isHappy=completedColors.has(c)&&!gonePigColors.has(c);
+    html+=`<div class="pig-char${isHappy?' happy':''}${isLeaving?' leaving':''}" data-pig-color="${c}" id="pig${c}">
       <img class="pig-head-img" src="images/pig_head.png" alt="猪猪侠">
       <div class="pig-outfit" style="background:${color.hex};--spark-color:${color.glow}"></div>
     </div>`;
   }
   row.innerHTML=html;
-
-  // 用保存的位置触发粒子动画
-  pigsToAnimate.forEach(({color,cx,cy})=>{
-    setTimeout(()=>animatePigLeave(color,cx,cy),500);
-  });
 }
 
 function animatePigLeave(colorIdx,cx,cy){
-  playBottleCompleteSound();
   const fx=document.getElementById('fxLayer');
   const color=COLORS[colorIdx];
-  for(let i=0;i<10;i++){
+
+  // 闪光圆环
+  const flash=document.createElement('div');flash.className='pig-flash';
+  flash.style.left=cx+'px';flash.style.top=cy+'px';
+  flash.style.background=`radial-gradient(circle,${color.glow},transparent 70%)`;
+  fx.appendChild(flash);setTimeout(()=>flash.remove(),700);
+
+  // 24 颗粒子螺旋飞出
+  for(let i=0;i<24;i++){
     const p=document.createElement('div');p.className='pig-particle';
     p.style.left=cx+'px';p.style.top=cy+'px';p.style.background=color.hex;
-    const angle=(i/10)*Math.PI*2,r=25+Math.random()*25;
+    const angle=(i/24)*Math.PI*2, r=35+Math.random()*50;
     p.style.setProperty('--px',Math.cos(angle)*r+'px');
-    p.style.setProperty('--py',Math.sin(angle)*r-30+'px');
+    p.style.setProperty('--py',Math.sin(angle)*r-20+'px');
+    p.style.width=(4+Math.random()*8)+'px';p.style.height=p.style.width;
+    p.style.boxShadow=`0 0 6px ${color.glow}`;
     fx.appendChild(p);setTimeout(()=>p.remove(),1000);
+  }
+
+  // 8 颗星形粒子旋转飞出
+  for(let i=0;i<8;i++){
+    const s=document.createElement('div');s.className='pig-star';
+    s.style.left=cx+'px';s.style.top=cy+'px';s.style.background='#fff';
+    const a=(i/8)*Math.PI*2+Math.random()*.3, d=55+Math.random()*60;
+    s.style.setProperty('--sx',Math.cos(a)*d+'px');
+    s.style.setProperty('--sy',Math.sin(a)*d-30+'px');
+    s.style.width=(4+Math.random()*5)+'px';s.style.height=s.style.width;
+    s.style.boxShadow=`0 0 8px ${color.glow}`;
+    fx.appendChild(s);setTimeout(()=>s.remove(),1200);
   }
 }
 
@@ -715,141 +1103,297 @@ function updateLevelHint(){
   hint.innerHTML=`${dots} ${cfg.colors}色 · ${cfg.layers}层 · ${cfg.name}`;
 }
 
-// ==================== 倒水动画 (SVG贝塞尔曲线液流) ====================
-function animatePour(fromIdx,toIdx,callback){
+// ==================== 倒水动画 ====================
+// 阶段: 源瓶移动到目标正上方 → 90度倾斜 → 瓶口对瓶口多层液流+水滴+液面变化 → 回正 → 归位
+
+function animatePour(fromIdx,toIdx,pourCount,callback){
   const area=document.getElementById('bottlesArea');
   const fromEl=area.querySelector(`[data-idx="${fromIdx}"]`),toEl=area.querySelector(`[data-idx="${toIdx}"]`);
   if(!fromEl||!toEl){callback();return;}
 
-  playPourSound();
-  const fromRect=fromEl.getBoundingClientRect(),toRect=toEl.getBoundingClientRect();
-  fromEl.classList.add('pouring');
-  const fx=document.getElementById('fxLayer');
-  const color=COLORS[bottles[fromIdx][bottles[fromIdx].length-1]];
+  const isPad=window.innerWidth>=700;
+  const bw=isPad?70:52,bh=isPad?165:120,neckH=isPad?18:12,neckW=isPad?28:20;
+  const bottleW=isPad?56:40; // CSS --bottle-w
+  const halfH=(neckH+bh)/2;
+  const origLeft=parseFloat(fromEl.style.left),origTop=parseFloat(fromEl.style.top);
+  const targetLeft=parseFloat(toEl.style.left),targetTop=parseFloat(toEl.style.top);
 
-  // 源瓶口 / 目标瓶口坐标
-  const sx=fromRect.left+fromRect.width/2, sy=fromRect.top+18;
-  const tx=toRect.left+toRect.width/2, ty=toRect.top+14;
+  const GAP=22; // 两瓶口间距
 
-  // 贝塞尔控制点：水平偏移 + 重力下垂
-  const mx=(sx+tx)/2 + ((tx>sx)?-30:30);
-  const my=Math.max(sy,ty)+Math.abs(tx-sx)*0.25+10;
+  // ===== 阶段1: 源瓶滑到目标正上方 =====
+  fromEl.classList.add('moving');
+  fromEl.style.left=(targetLeft+halfH)+'px';
+  fromEl.style.top=(targetTop+neckH-GAP-halfH)+'px';
+  fromEl._origLeft=origLeft;fromEl._origTop=origTop;
 
-  // ===== SVG液流 =====
-  const svgNS='http://www.w3.org/2000/svg';
-  const svg=document.createElementNS(svgNS,'svg');
-  svg.setAttribute('class','pour-stream-svg');
-  const pathD=`M${sx},${sy} Q${mx},${my} ${tx},${ty}`;
-  const pathLen=Math.sqrt((tx-sx)**2+(ty-sy)**2)*1.3; // 近似长度
-  svg.style.setProperty('--plen',pathLen+'px');
+  setTimeout(()=>{
+    // ===== 阶段2: 90度倾斜 + 倒水 =====
+    playPourSound();
+    fromEl.classList.remove('moving');
+    fromEl.classList.add('pouring-move');
 
-  // 发光层
-  const glow=document.createElementNS(svgNS,'path');
-  glow.setAttribute('d',pathD);glow.setAttribute('stroke-width','14');
-  glow.setAttribute('stroke',color.glow);glow.setAttribute('fill','none');
-  glow.setAttribute('stroke-linecap','round');
-  glow.classList.add('liquid-glow');
-  svg.appendChild(glow);
-
-  // 主液流
-  const path=document.createElementNS(svgNS,'path');
-  path.setAttribute('d',pathD);path.setAttribute('stroke-width','6');
-  path.setAttribute('stroke',color.light);path.setAttribute('fill','none');
-  path.setAttribute('stroke-linecap','round');
-  path.classList.add('liquid-path');
-  svg.appendChild(path);
-
-  // 高光线
-  const hl=document.createElementNS(svgNS,'path');
-  hl.setAttribute('d',pathD);hl.setAttribute('stroke-width','2');
-  hl.setAttribute('stroke','rgba(255,255,255,.5)');hl.setAttribute('fill','none');
-  hl.setAttribute('stroke-linecap','round');
-  hl.setAttribute('stroke-dasharray',pathLen+'px');
-  hl.setAttribute('stroke-dashoffset',pathLen+'px');
-  hl.style.animation='streamReveal .5s ease forwards';
-  svg.appendChild(hl);
-
-  fx.appendChild(svg);
-  setTimeout(()=>svg.remove(),550);
-
-  // ===== 水滴 (沿弧线) =====
-  // 在贝塞尔曲线的10个采样点上生成水滴
-  for(let i=0;i<14;i++){
-    const t=(i/14+.02);
-    const bx=(1-t)*(1-t)*sx+2*(1-t)*t*mx+t*t*tx;
-    const by=(1-t)*(1-t)*sy+2*(1-t)*t*my+t*t*ty;
-    const delay=i*28+30;
+    // 等倾斜动画走一段再获取精确位置（160ms确保12%×1.5s=180ms倾斜完成后再获取）
     setTimeout(()=>{
-      const d=document.createElement('div');
-      d.className='pour-splash';
-      d.style.left=(bx-2)+'px';d.style.top=(by-2)+'px';
-      d.style.width='7px';d.style.height='9px';
-      d.style.borderRadius='50% 50% 50% 50% / 60% 60% 40% 40%';
-      d.style.background=color.hex;
-      d.style.boxShadow=`0 0 4px ${color.glow}`;
-      // 水滴继续往目标飞行
-      const dxOff=(Math.random()-.5)*14;
-      const dyOff=Math.random()*10+4;
-      d.style.setProperty('--sdx',dxOff+'px');
-      d.style.setProperty('--sdy',dyOff+'px');
-      d.style.animationDuration=(.3+Math.random()*.25)+'s';
-      fx.appendChild(d);setTimeout(()=>d.remove(),500);
-    },delay);
-  }
+      const fromRect=fromEl.getBoundingClientRect(),toRect=toEl.getBoundingClientRect();
+      const fx=document.getElementById('fxLayer');
+      const pouree=bottles[fromIdx];
+      const color=COLORS[pouree[pouree.length-1]];
 
-  // ===== 溅射 =====
-  setTimeout(()=>{
-    playDropSound();
-    // 目标瓶波纹
-    const targetBody=toEl.querySelector('.bottle-body');
-    if(targetBody){
-      const ripple=document.createElement('div');ripple.className='receive-ripple';ripple.style.background=color.light;
-      targetBody.appendChild(ripple);setTimeout(()=>ripple.remove(),400);
-    }
-    // 溅射粒子
-    for(let i=0;i<10;i++){
-      const sp=document.createElement('div');sp.className='pour-splash';
-      sp.style.left=(tx-3)+'px';sp.style.top=(ty-3)+'px';
-      sp.style.width=(3+Math.random()*5)+'px';sp.style.height=(3+Math.random()*5)+'px';
-      sp.style.background=color.light;
-      const a=Math.random()*Math.PI*2,d=8+Math.random()*22;
-      sp.style.setProperty('--sdx',Math.cos(a)*d+'px');
-      sp.style.setProperty('--sdy',Math.sin(a)*d-(6+Math.random()*14)+'px');
-      sp.style.animationDuration=(.25+Math.random()*.2)+'s';
-      fx.appendChild(sp);setTimeout(()=>sp.remove(),400);
-    }
-  },200);
+      // 90°倾斜后瓶口在左侧中心
+      const sx=fromRect.left+neckH*0.35;
+      const sy=fromRect.top+halfH;
+      // 目标瓶口在顶部中央
+      const tx=toRect.left+toRect.width/2;
+      const ty=toRect.top+neckH+3;
 
-  // ===== 源瓶液面下降效果 =====
-  const fromBody=fromEl.querySelector('.bottle-body');
-  if(fromBody&&bottles[fromIdx].length>0){
-    const drainH=(1/maxLayers*100)+'%';
-    const drain=document.createElement('div');
-    drain.className='liquid-drain';
-    drain.style.setProperty('--drain-h',drainH);
-    drain.style.background=color.dark;
-    drain.style.opacity='.35';
-    fromBody.appendChild(drain);
-    setTimeout(()=>drain.remove(),500);
-  }
+      // ===== 重力优化：水受重力下坠，控制点向下拉 =====
+      const dx=tx-sx, dy=ty-sy;
+      const gravityDrop=Math.abs(dx)*0.12+Math.max(0,dy)*0.25+8;
+      const midX=(sx+tx)/2;
+      const midY=(sy+ty)/2+gravityDrop;
+      const segLen=Math.sqrt((tx-sx)**2+(ty-sy)**2)*1.6;
 
-  setTimeout(()=>{
-    fromEl.classList.remove('pouring');
-    callback();
-  },520);
+      // ===== 多层 SVG 液流（模拟宽水流）=====
+      const svgNS='http://www.w3.org/2000/svg';
+      const svg=document.createElementNS(svgNS,'svg');
+      svg.setAttribute('class','pour-stream-svg');
+
+      // 外层辉光（最宽）
+      const glowD=`M${sx},${sy} Q${midX},${midY} ${tx},${ty}`;
+      const glow=document.createElementNS(svgNS,'path');
+      glow.setAttribute('d',glowD);glow.setAttribute('stroke-width','18');
+      glow.setAttribute('stroke',color.glow);glow.setAttribute('fill','none');
+      glow.setAttribute('stroke-linecap','round');glow.classList.add('liquid-glow');
+      svg.appendChild(glow);
+
+      // 主液流 — 3条平行线模拟宽度
+      const offsets=[0,-3.5,3.5];
+      offsets.forEach(off=>{
+        const osx=sx+off*0.3,osy=sy+off*0.2, otx=tx+off*0.15,oty=ty+off*0.3;
+        const omx=(osx+otx)/2;
+        const odx=otx-osx,ody=oty-osy;
+        const omy=(osy+oty)/2+Math.abs(odx)*0.12+Math.max(0,ody)*0.25+8;
+        const pathD=`M${osx},${osy} Q${omx},${omy} ${otx},${oty}`;
+
+        const path=document.createElementNS(svgNS,'path');
+        path.setAttribute('d',pathD);path.setAttribute('stroke-width','4');
+        path.setAttribute('stroke',color.light);path.setAttribute('fill','none');
+        path.setAttribute('stroke-linecap','round');path.classList.add('liquid-path');
+        svg.appendChild(path);
+      });
+
+      // 中心高光
+      const hlD=`M${sx},${sy} Q${midX},${midY} ${tx},${ty}`;
+      const hl=document.createElementNS(svgNS,'path');
+      hl.setAttribute('d',hlD);hl.setAttribute('stroke-width','2');
+      hl.setAttribute('stroke','rgba(255,255,255,.65)');hl.setAttribute('fill','none');
+      hl.setAttribute('stroke-linecap','round');hl.setAttribute('stroke-dasharray',segLen+'px');
+      hl.setAttribute('stroke-dashoffset',segLen+'px');
+      hl.style.animation='streamReveal .6s ease forwards';svg.appendChild(hl);
+
+      svg.style.setProperty('--plen',segLen+'px');
+      fx.appendChild(svg);setTimeout(()=>svg.remove(),1000);
+
+      // ===== 瓶口出水粒子（源瓶口处喷出小水珠）=====
+      for(let i=0;i<8;i++){
+        const delay=i*60+50;
+        setTimeout(()=>{
+          const p=document.createElement('div');p.className='pour-splash';
+          p.style.left=(sx-1)+'px';p.style.top=(sy-1)+'px';
+          p.style.width=(2+Math.random()*3)+'px';p.style.height=p.style.width;
+          p.style.background=color.light;
+          p.style.boxShadow=`0 0 4px ${color.glow}`;
+          const a=-Math.PI*0.7+Math.random()*Math.PI*0.4; // 朝左下方飞出
+          const d=10+Math.random()*14;
+          p.style.setProperty('--sdx',Math.cos(a)*d+'px');
+          p.style.setProperty('--sdy',Math.sin(a)*d+'px');
+          p.style.animationDuration=(.3+Math.random()*.25)+'s';
+          fx.appendChild(p);setTimeout(()=>p.remove(),400);
+        },delay);
+      }
+
+      // ===== 液面变化：根据实际倒水量 pourCount 计算高度 =====
+      const drainH=(pourCount/maxLayers*100)+'%';
+      const fillH=(pourCount/maxLayers*100)+'%';
+
+      // 源瓶排水：渐变遮罩从瓶口侧扩展
+      const fromBody=fromEl.querySelector('.bottle-body');
+      if(fromBody&&pouree.length>0){
+        const drain=document.createElement('div');
+        drain.className='liquid-drain-overlay';
+        drain.style.setProperty('--drain-h',drainH);
+        fromBody.appendChild(drain);
+        // 让排水遮罩一直保留到DOM重建，源瓶归位时水已经"消失"
+      }
+
+      // 目标瓶注水：新颜色从当前液面上方生长
+      const toBody=toEl.querySelector('.bottle-body');
+      if(toBody){
+        const currentLevel=bottles[toIdx].length;
+        const fill=document.createElement('div');
+        fill.className='liquid-fill-layer';
+        fill.style.setProperty('--fill-h',fillH);
+        fill.style.background=`linear-gradient(180deg,${color.light} 0%,${color.hex} 60%,${color.dark} 100%)`;
+        fill.style.bottom=(currentLevel/maxLayers*100)+'%';
+        toBody.appendChild(fill);
+        // 注水层留在DOM直到重建
+      }
+
+      // ===== 水滴沿弧线飞行 =====
+      const totalDrops=pourCount>1?40:26;
+      for(let i=0;i<totalDrops;i++){
+        const tVal=(i/totalDrops+.02);
+        const bx=Math.pow(1-tVal,2)*sx+2*(1-tVal)*tVal*midX+tVal*tVal*tx;
+        const by=Math.pow(1-tVal,2)*sy+2*(1-tVal)*tVal*midY+tVal*tVal*ty;
+        const delay=i*28+90;
+        setTimeout(()=>{
+          const drop=document.createElement('div');drop.className='pour-drop';
+          drop.style.left=(bx-4)+'px';drop.style.top=(by-5)+'px';
+          drop.style.background=`radial-gradient(circle at 30% 30%,${color.light},${color.hex})`;
+          drop.style.boxShadow=`0 0 5px ${color.glow}`;
+          drop.style.animationDelay=(Math.random()*.1)+'s';
+          fx.appendChild(drop);setTimeout(()=>drop.remove(),700);
+        },delay);
+      }
+
+      // ===== 撞击溅射 (重力物理) =====
+      setTimeout(()=>{
+        playDropSound();
+        const targetBody=toEl.querySelector('.bottle-body');
+        if(targetBody){
+          const ripple=document.createElement('div');ripple.className='receive-ripple';ripple.style.background=color.light;
+          targetBody.appendChild(ripple);setTimeout(()=>ripple.remove(),500);
+        }
+
+        // 撞击水柱 — 从瓶口向上喷出再散开
+        const colH=pourCount>1?16:10;
+        const column=document.createElement('div');column.className='pour-hit-column';
+        column.style.left=(tx-3)+'px';column.style.top=(ty-2)+'px';
+        column.style.width='6px';column.style.height=colH+'px';
+        column.style.background=`linear-gradient(180deg,${color.light} 0%,${color.glow} 100%)`;
+        column.style.boxShadow=`0 0 6px ${color.glow}`;
+        fx.appendChild(column);setTimeout(()=>column.remove(),500);
+
+        // 层级1: 大颗水滴弹起 (向上弧线)
+        const bigCount=pourCount>1?10:6;
+        for(let i=0;i<bigCount;i++){
+          setTimeout(()=>{
+            const sp=document.createElement('div');sp.className='pour-splash';
+            sp.style.left=(tx-3)+'px';sp.style.top=(ty+1)+'px';
+            sp.style.width=(3.5+Math.random()*4.5)+'px';sp.style.height=sp.style.width;
+            sp.style.background=color.light;
+            sp.style.boxShadow=`0 0 5px ${color.glow}`;
+            // 水滴从瓶口向上弹起 (-90°~-25°扇形)，然后抛物线落下
+            const a=-Math.PI/2+(Math.random()-.5)*Math.PI*0.65;
+            const d=8+Math.random()*20;
+            sp.style.setProperty('--sdx',Math.cos(a)*d+'px');
+            sp.style.setProperty('--sdy',Math.sin(a)*d+'px');
+            sp.style.animationDuration=(.3+Math.random()*.3)+'s';
+            fx.appendChild(sp);setTimeout(()=>sp.remove(),700);
+          },i*18);
+        }
+
+        // 层级2: 微小水雾环绕散开 (更轻更远)
+        const mistCount=pourCount>1?20:12;
+        for(let i=0;i<mistCount;i++){
+          setTimeout(()=>{
+            const sp=document.createElement('div');sp.className='pour-splash';
+            sp.style.left=(tx-1)+'px';sp.style.top=(ty+3)+'px';
+            sp.style.width=(1.2+Math.random()*2.5)+'px';sp.style.height=sp.style.width;
+            sp.style.background=color.light;
+            sp.style.opacity='.65';
+            sp.style.boxShadow=`0 0 3px ${color.glow}`;
+            // 随机方向但偏向上方
+            const a=-Math.PI/2+(Math.random()-.5)*Math.PI*1.2;
+            const d=4+Math.random()*26;
+            sp.style.setProperty('--sdx',Math.cos(a)*d+'px');
+            sp.style.setProperty('--sdy',Math.sin(a)*d+'px');
+            sp.style.animationDuration=(.18+Math.random()*.3)+'s';
+            fx.appendChild(sp);setTimeout(()=>sp.remove(),550);
+          },i*10);
+        }
+      },520);
+
+    },160);
+
+    // ===== 阶段3: 数据更新 → 源瓶立即显示变化 → 平滑回正归位 =====
+    setTimeout(()=>{
+      // 1. 先执行倒水数据更新
+      for(let i=0;i<pourCount;i++){
+        bottles[toIdx].push(bottles[fromIdx].pop());
+      }
+      moves++;
+
+      // 2. 更新源瓶DOM：立即显示减少/清空的水位
+      const fromBodyNow=fromEl.querySelector('.bottle-body');
+      if(fromBodyNow){
+        const sb=bottles[fromIdx];
+        let sarr=[],sj=0;
+        while(sj<sb.length){let sc=sb[sj],sct=1;while(sj+sct<sb.length&&sb[sj+sct]===sc)sct++;sarr.push({color:sc,count:sct});sj+=sct;}
+        let sblocks='';
+        for(const seg of sarr){const c=COLORS[seg.color];sblocks+=`<div class="color-block" style="height:${seg.count/maxLayers*100}%;background:linear-gradient(180deg,${c.light} 0%,${c.hex} 40%,${c.dark} 100%)"></div>`}
+        if(sb.length<maxLayers)sblocks+=`<div class="color-block" style="height:${(maxLayers-sb.length)/maxLayers*100}%"></div>`;
+        fromBodyNow.innerHTML=sblocks;
+      }
+
+      // 3. 更新目标瓶DOM：液面已经上升
+      const toBodyNow=toEl.querySelector('.bottle-body');
+      if(toBodyNow){
+        const tb=bottles[toIdx];
+        let tarr=[],tj=0;
+        while(tj<tb.length){let tc=tb[tj],tct=1;while(tj+tct<tb.length&&tb[tj+tct]===tc)tct++;tarr.push({color:tc,count:tct});tj+=tct;}
+        let tblocks='';
+        for(const seg of tarr){const c=COLORS[seg.color];tblocks+=`<div class="color-block" style="height:${seg.count/maxLayers*100}%;background:linear-gradient(180deg,${c.light} 0%,${c.hex} 40%,${c.dark} 100%)"></div>`}
+        if(tb.length<maxLayers)tblocks+=`<div class="color-block" style="height:${(maxLayers-tb.length)/maxLayers*100}%"></div>`;
+        toBodyNow.innerHTML=tblocks;
+      }
+
+      // 4. 锁定当前倾斜状态 → 移除pourTilt动画 → 平滑回正旋转+归位
+      fromEl.style.transform='rotate(-90deg)';
+      fromEl.classList.remove('pouring-move');
+      fromEl.classList.add('moving-back');
+      fromEl.style.transition='left .45s cubic-bezier(.4,0,.2,1), top .45s cubic-bezier(.4,0,.2,1), transform .35s ease';
+      fromEl.style.transform='rotate(0deg)';
+      fromEl.style.left=fromEl._origLeft+'px';
+      fromEl.style.top=fromEl._origTop+'px';
+
+      setTimeout(()=>{
+        fromEl.classList.remove('moving-back');
+        fromEl.style.transition='';
+        fromEl.style.transform='';
+        callback();
+      },500);
+    },1050);
+
+  },480);
 }
 
 // ==================== 交互 ====================
 function handleBottleClick(idx){
   if(isAnimating||idx<0||idx>=bottles.length)return;
-  initAudio();
+  resumeAudio();startBgm();
+  if(pourAudio)pourAudio.load(); // 预加载倒水音效
   if(selectedBottle===-1){
     if(bottles[idx].length>0){const b=bottles[idx],done=b.length===maxLayers&&b.every(c=>c===b[0]);if(!done)selectedBottle=idx}
   }else if(selectedBottle===idx){selectedBottle=-1}
   else{
     if(canPourTo(selectedBottle,idx)){
-      isAnimating=true;const from=selectedBottle,to=idx;selectedBottle=-1;render();
-      animatePour(from,to,()=>{pourTo(from,to);render();isAnimating=false;if(checkWin())onWin()});return;
+      isAnimating=true;
+      document.getElementById('bottlesArea').classList.add('animating');
+      const from=selectedBottle,to=idx;selectedBottle=-1;
+      // 计算实际倒水量（可能多层同色）
+      const pouree=bottles[from],targetB=bottles[to];
+      let col=pouree[pouree.length-1],cnt=0;
+      for(let i=pouree.length-1;i>=0&&pouree[i]===col;i--)cnt++;
+      const pourCount=Math.min(cnt,maxLayers-targetB.length);
+      // 记录历史状态
+      history.push({bottles:bottles.map(b=>[...b]),moves});
+      render();
+      animatePour(from,to,pourCount,()=>{
+        render();isAnimating=false;
+        document.getElementById('bottlesArea').classList.remove('animating');
+        if(checkWin())onWin();
+      });return;
     }else{
       const wrappers=document.querySelectorAll('.bottle-wrapper');wrappers[idx].classList.add('shake');
       setTimeout(()=>wrappers[idx]&&wrappers[idx].classList.remove('shake'),400);
@@ -859,16 +1403,6 @@ function handleBottleClick(idx){
   render();
 }
 document.getElementById('bottlesArea').addEventListener('click',function(e){const w=e.target.closest('.bottle-wrapper');if(w)handleBottleClick(parseInt(w.dataset.idx))});
-
-// ==================== 提示 ====================
-function showHint(){
-  if(isAnimating)return;const wrappers=document.querySelectorAll('.bottle-wrapper');
-  wrappers.forEach(w=>w.classList.remove('hint-pulse'));
-  for(let i=0;i<bottles.length;i++){
-    if(!bottles[i].length)continue;const d=bottles[i].length===maxLayers&&bottles[i].every(c=>c===bottles[i][0]);if(d)continue;
-    for(let j=0;j<bottles.length;j++){if(canPourTo(i,j)){wrappers[i].classList.add('hint-pulse');wrappers[j].classList.add('hint-pulse');setTimeout(()=>wrappers.forEach(w=>w.classList.remove('hint-pulse')),2500);return}}
-  }
-}
 
 // ==================== 空瓶口令 ====================
 function showEmptyBottleModal(){document.getElementById('pwdOverlay').style.display='flex';document.getElementById('pwdInput').value='';document.getElementById('pwdError').style.display='none';setTimeout(()=>document.getElementById('pwdInput').focus(),200)}
@@ -917,11 +1451,20 @@ document.getElementById('winOverlay').addEventListener('click',function(e){if(e.
 // ==================== 胜利（修复星级） ====================
 function onWin(){
   const cfg=LEVEL_CONFIGS[currentLevel-1];
-  const totalLayers=cfg.colors*cfg.layers;
   let stars;
-  if(moves<=totalLayers*1.3)stars=3;
-  else if(moves<=totalLayers*2.2)stars=2;
-  else stars=1;
+  if(levelOptimalMoves>0){
+    // 基于BFS精确最优步数计算星级
+    if(moves<=levelOptimalMoves)stars=3;
+    else if(moves<=levelOptimalMoves*1.6)stars=2;
+    else stars=1;
+  }else{
+    // 兜底：基于总层数估算
+    const totalLayers=cfg.colors*cfg.layers;
+    if(moves<=totalLayers*1.3)stars=3;
+    else if(moves<=totalLayers*2.2)stars=2;
+    else stars=1;
+  }
+  // 入门关卡特殊放宽
   if(cfg.colors===2&&cfg.layers===2){
     if(moves<=4)stars=3;else if(moves<=8)stars=2;else stars=1;
   }
@@ -933,7 +1476,8 @@ function onWin(){
   setTimeout(()=>{
     const msgs=['太棒了！','完美通关！','颜色大师！','一气呵成！'];
     document.getElementById('winTitle').textContent=msgs[Math.floor(Math.random()*msgs.length)];
-    document.getElementById('winSubtitle').textContent=`第 ${currentLevel} 关 · ${moves} 步 (最优约 ${Math.ceil(totalLayers*1.3)} 步)`;
+    const optText=levelOptimalMoves>0?`最优 ${levelOptimalMoves} 步`:`最优约 ${Math.ceil(cfg.colors*cfg.layers*1.3)} 步`;
+    document.getElementById('winSubtitle').textContent=`第 ${currentLevel} 关 · ${moves} 步 (${optText})`;
     document.getElementById('winStars').textContent='⭐'.repeat(stars);
     document.getElementById('btnNext').style.display=currentLevel<TOTAL_LEVELS?'':'none';
     document.getElementById('winOverlay').style.display='flex';
@@ -944,7 +1488,7 @@ function onWin(){
 
 function spawnConfetti(){
   const fx=document.getElementById('fxLayer');
-  const cols=['#ff3b6e','#ffc940','#3ddc84','#4da6ff','#a06ee0','#ff6b9d','#2dd4bf','#ff8c3a'];
+  const cols=COLORS.map(c=>c.hex);
   for(let i=0;i<60;i++){
     const el=document.createElement('div');el.className='confetti-piece';
     el.style.left=Math.random()*100+'%';el.style.top=-(Math.random()*60)+'px';
@@ -957,7 +1501,7 @@ function spawnConfetti(){
 }
 function spawnFireworks(){
   const fx=document.getElementById('fxLayer');
-  const cols=['#ff3b6e','#ffc940','#3ddc84','#4da6ff','#a06eea','#ff6b9d','#2dd4bf','#ff8c3a'];
+  const cols=COLORS.map(c=>c.hex);
   const cx=30+Math.random()*40,cy=20+Math.random()*40;
   for(let i=0;i<22;i++){
     const el=document.createElement('div');el.className='firework-particle';
@@ -975,7 +1519,7 @@ const TUTORIAL_STEPS=[
   {icon:'👆',title:'点击瓶子选中',text:'<b>点击</b>有颜色且未装满的瓶子，<br>它会浮起来轻轻摇晃。',demo:'select'},
   {icon:'🫗',title:'倒到另一个瓶子',text:'再<b>点击</b>同色或空瓶子，<br>液体会带着音效和水滴动画流过去。<br>相同颜色会融为一体。',demo:'pour'},
   {icon:'📏',title:'记住规则',text:'只有<b>顶部颜色相同</b>才能互倒。<br>空瓶可以接收任何颜色。<br>装满对应猪猪侠就会开心离开 ',demo:'rules'},
-  {icon:'🎯',title:'准备好了吗？',text:'💡提示 🧴空瓶 ↩撤销 🔄重置<br>右上角🔊可开关音效<br>进度会自动保存',demo:'ready'}
+  {icon:'🎯',title:'准备好了吗？',text:'🧴空瓶 ↩撤销 🔄重置<br>右上角🎵控制音乐 💧控制音效<br>进度会自动保存',demo:'ready'}
 ];
 let tutStep=0;
 function showTutorial(){if(tutorialShown)return;tutStep=0;renderTutorialStep();document.getElementById('tutorialOverlay').style.display='flex';tutorialShown=true;try{localStorage.setItem('ws_tutorial','1')}catch(e){}}
@@ -994,20 +1538,22 @@ function renderDemo(type){
   else if(type==='select')demo.innerHTML=`<div class="demo-bottle highlight" style="animation:floatSway 2s ease-in-out infinite">${lyr(c0,1)}${lyr(c1,1)}${lyr(c0,1)}${lyr(c1,1)}</div><div style="color:#c4a6ff;font-size:16px">点击选中</div>`;
   else if(type==='pour')demo.innerHTML=`<div class="demo-bottle">${lyr(c0,1)}${lyr(c1,1)}</div><div style="color:#c4a6ff;font-size:14px">→</div><div class="demo-bottle highlight">${lyr(c0,2)}${lyr(c1,1)}</div>`;
   else if(type==='rules')demo.innerHTML=`<div style="text-align:center;font-size:11px"><div style="color:#4caf50;margin-bottom:4px">同色可以倒</div><div style="display:flex;gap:5px;align-items:center;justify-content:center;margin-bottom:8px"><div class="demo-bottle" style="height:40px">${lyr(c0,1)}</div><span style="color:rgba(255,255,255,.5)">→</span><div class="demo-bottle" style="height:40px">${lyr(c0,2)}</div></div><div style="color:#ff6b6b;margin-bottom:4px">不同色不行</div><div style="display:flex;gap:5px;align-items:center;justify-content:center"><div class="demo-bottle" style="height:40px">${lyr(c0,1)}</div><span style="color:rgba(255,255,255,.5)">→</span><div class="demo-bottle" style="height:40px">${lyr(c1,1)}</div></div></div>`;
-  else demo.innerHTML=`<div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:center"><span style="background:rgba(255,255,255,.1);color:#fff;padding:4px 10px;border-radius:12px;font-size:11px">💡 提示</span><span style="background:rgba(255,255,255,.1);color:#fff;padding:4px 10px;border-radius:12px;font-size:11px">🧴 空瓶</span><span style="background:rgba(255,255,255,.1);color:#fff;padding:4px 10px;border-radius:12px;font-size:11px">↩ 撤销</span><span style="background:rgba(255,255,255,.1);color:#fff;padding:4px 10px;border-radius:12px;font-size:11px">🔊 音效</span></div>`;
+  else demo.innerHTML=`<div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:center"><span style="background:rgba(255,255,255,.1);color:#fff;padding:4px 10px;border-radius:12px;font-size:11px">💡 提示</span><span style="background:rgba(255,255,255,.1);color:#fff;padding:4px 10px;border-radius:12px;font-size:11px">↩ 撤销</span><span style="background:rgba(255,255,255,.1);color:#fff;padding:4px 10px;border-radius:12px;font-size:11px">🎵 音乐</span><span style="background:rgba(255,255,255,.1);color:#fff;padding:4px 10px;border-radius:12px;font-size:11px">💧 音效</span></div>`;
 }
 function nextTutorialStep(){if(tutStep<TUTORIAL_STEPS.length-1){tutStep++;renderTutorialStep()}else closeTutorial()}
-function closeTutorial(){document.getElementById('tutorialOverlay').style.display='none'}
+function closeTutorial(){document.getElementById('tutorialOverlay').style.display='none';resumeAudio();startBgm()}
 
 // ==================== 初始化 ====================
 function initLevel(lv){
   currentLevel=lv;bottles=generateLevel(lv);selectedBottle=-1;moves=0;history=[];isAnimating=false;
-  completedColors=new Set();gonePigColors=new Set();
+  completedColors=new Set();gonePigColors=new Set();leavingPigColors=new Set();
+  levelOptimalMoves=solveMinMoves(bottles,maxLayers,100000);
   updateStarsDisplay();render();
 }
 function init(){
   loadProgress();initLevel(currentLevel);
   initBackground();
+  loadBgm();loadPourSound();
   if(!tutorialShown)showTutorial();
 }
 
